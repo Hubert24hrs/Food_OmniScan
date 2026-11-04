@@ -84,7 +84,9 @@ class _ApiViewState extends State<ApiView> {
 
   Future<void> _reload() async {
     final f = _fetch();
-    setState(() => _future = f);
+    setState(() {
+      _future = f;
+    });
     await f;
   }
 

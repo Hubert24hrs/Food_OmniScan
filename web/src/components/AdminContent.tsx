@@ -56,6 +56,44 @@ export function AdminAnalytics() {
 
 const blank: Article = { slug: "", title: "", summary: "", body: "", topic: "nutrition", region: null, source_keys: [], status: "draft" };
 
+type Reported = { id: string; product_id: string; rating: number; title: string | null; body: string | null; status: string; reports: number; reasons: string[] };
+
+/** Reviews people reported. Three reports hide a review until a moderator publishes or hides it. */
+export function AdminReviews() {
+  const q = useApi<Reported[]>("/admin/reviews/reported");
+  const [error, setError] = useState<unknown>(null);
+  const act = async (id: string, action: "publish" | "hide") => {
+    setError(null);
+    try {
+      await api(`/admin/reviews/${id}/moderate`, { body: { action } });
+      q.reload();
+    } catch (e) {
+      setError(e);
+    }
+  };
+  if (q.loading) return <Skeleton className="h-32" />;
+  if (q.error) return <ErrorBox error={q.error} onRetry={q.reload} />;
+  return (
+    <div className="space-y-3">
+      {error ? <ErrorBox error={error} /> : null}
+      {!q.data?.length && <p className="text-sm text-muted">No reported reviews.</p>}
+      {q.data?.map((r) => (
+        <Card key={r.id} className="text-sm">
+          <p className="font-semibold">
+            {r.reports} report(s) · {r.reasons.join(", ")} <Badge tone={r.status === "hidden" ? "red" : "grey"}>{r.status}</Badge>
+          </p>
+          <p className="mt-1">{"★".repeat(r.rating)} {r.title}</p>
+          {r.body && <p className="mt-1 text-muted">{r.body}</p>}
+          <div className="mt-2 flex gap-2">
+            <Button variant="secondary" onClick={() => act(r.id, "publish")}>Keep published</Button>
+            <Button variant="danger" onClick={() => act(r.id, "hide")}>Hide</Button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export function AdminArticles() {
   const list = useApi<Article[]>("/admin/articles");
   const [edit, setEdit] = useState<Article | null>(null);

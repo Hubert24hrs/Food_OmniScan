@@ -81,7 +81,13 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: const PreferredSize(preferredSize: Size.fromHeight(3), child: FreshStripe()),
       ),
       body: RefreshIndicator(
-        onRefresh: () async => setState(() => _recent = _load()),
+        onRefresh: () async {
+          final f = _load();
+          setState(() {
+            _recent = f;
+          });
+          await f;
+        },
         child: ListView(padding: const EdgeInsets.all(16), children: [
           Card(
             clipBehavior: Clip.antiAlias,

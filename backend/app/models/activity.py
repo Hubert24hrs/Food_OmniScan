@@ -101,6 +101,31 @@ class UserReview(IdMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20), default="published")  # published | hidden
 
 
+class ReviewReport(IdMixin, Base):
+    """A user flagging a review as objectionable. Enough distinct reports hide it until a moderator decides."""
+
+    __tablename__ = "review_reports"
+    __table_args__ = (UniqueConstraint("review_id", "reporter_user_id"),)
+
+    review_id: Mapped[str] = mapped_column(ForeignKey("user_reviews.id", ondelete="CASCADE"), index=True)
+    reporter_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    reason: Mapped[str] = mapped_column(String(30))  # spam | offensive | false_info | other
+    note: Mapped[str | None] = mapped_column(String(500))
+    resolved: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class UserBlock(IdMixin, Base):
+    """One user hiding everything another user posts. The blocked user isn't told."""
+
+    __tablename__ = "user_blocks"
+    __table_args__ = (UniqueConstraint("user_id", "blocked_user_id"),)
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    blocked_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class CommunitySubmission(IdMixin, TimestampMixin, Base):
     __tablename__ = "community_submissions"
 

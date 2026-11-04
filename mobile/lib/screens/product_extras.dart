@@ -40,7 +40,7 @@ class ProductExtras extends StatelessWidget {
       const SizedBox(height: 12),
       _Details(productId: productId),
       _Prices(productId: productId),
-      _Reviews(productId: productId),
+      ReviewsCard(productId: productId),
       if (app.signedIn)
         TextButton.icon(onPressed: () => _report(context), icon: const Icon(Icons.flag_outlined), label: const Text('Report incorrect information')),
     ]);
@@ -227,8 +227,8 @@ class _Prices extends StatelessWidget {
   }
 }
 
-class _Reviews extends StatelessWidget {
-  const _Reviews({required this.productId});
+class ReviewsCard extends StatelessWidget {
+  const ReviewsCard({super.key, required this.productId});
   final String productId;
 
   @override
@@ -248,6 +248,20 @@ class _Reviews extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text('★' * (x['rating'] as int) + '☆' * (5 - (x['rating'] as int)), style: const TextStyle(color: Brand.orange)),
                 subtitle: x['body'] != null ? Text(x['body'] as String) : null,
+                trailing: app.signedIn && x['mine'] != true
+                    ? PopupMenuButton<String>(
+                        tooltip: 'Report or block',
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        onSelected: (v) async {
+                          final done = v == 'report' ? await _report(context, app, x['id'] as String) : await _block(context, app, x['id'] as String);
+                          if (done) await reload();
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(value: 'report', child: ListTile(leading: Icon(Icons.flag_outlined), title: Text('Report review'))),
+                          PopupMenuItem(value: 'block', child: ListTile(leading: Icon(Icons.block), title: Text('Block this reviewer'))),
+                        ],
+                      )
+                    : null,
               ),
             if (app.signedIn)
               TextButton.icon(
@@ -262,6 +276,58 @@ class _Reviews extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Report a review as objectionable; it disappears for the reporter at once and for everyone after several reports.
+  Future<bool> _report(BuildContext context, AppState app, String reviewId) async {
+    var reason = 'spam';
+    final note = TextEditingController();
+    const reasons = {'spam': 'Spam or advertising', 'offensive': 'Offensive or abusive', 'false_info': 'False or misleading', 'other': 'Something else'};
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, set) => AlertDialog(
+          title: const Text('Report review'),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              RadioGroup<String>(
+                groupValue: reason,
+                onChanged: (v) => set(() => reason = v ?? reason),
+                child: Column(children: [for (final e in reasons.entries) RadioListTile<String>(value: e.key, title: Text(e.value))]),
+              ),
+              TextField(controller: note, maxLength: 500, decoration: const InputDecoration(hintText: 'Details (optional)')),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Report')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !context.mounted) return false;
+    final r = await runAction(
+      context,
+      () => app.api.post('/reviews/$reviewId/report', {'reason': reason, if (note.text.trim().isNotEmpty) 'note': note.text.trim()}),
+      ok: "Thanks. You won't see this review again, and our moderators will check it.",
+    );
+    return r != null;
+  }
+
+  Future<bool> _block(BuildContext context, AppState app, String reviewId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Block this reviewer?'),
+        content: const Text("You won't see any of their reviews. They aren't told. You can unblock from Profile → Privacy & data."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Block')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return false;
+    return await runAction(context, () => app.api.post('/reviews/$reviewId/block-author'), ok: 'Reviewer blocked') != null;
   }
 
   Future<void> _write(BuildContext context, AppState app) async {

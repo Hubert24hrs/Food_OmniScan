@@ -155,7 +155,55 @@ export function ProductPrices({ productId }: { productId: string }) {
   );
 }
 
-type Reviews = { average: number | null; count: number; reviews: { id: string; rating: number; title: string | null; body: string | null; created_at: string }[] };
+type Reviews = { average: number | null; count: number; reviews: { id: string; rating: number; title: string | null; body: string | null; created_at: string; mine?: boolean }[] };
+
+const REPORT_REASONS = [
+  ["spam", "Spam or advertising"],
+  ["offensive", "Offensive or abusive"],
+  ["false_info", "False or misleading"],
+  ["other", "Something else"],
+] as const;
+
+/** Report or block on someone else's review. Reported reviews disappear for the reporter straight away. */
+function ReviewActions({ reviewId, onDone }: { reviewId: string; onDone: (msg: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<string>("spam");
+  const [error, setError] = useState<unknown>(null);
+  const run = async (path: string, body: unknown, msg: string) => {
+    setError(null);
+    try {
+      await api(path, { method: "POST", body });
+      onDone(msg);
+    } catch (e) {
+      setError(e);
+    }
+  };
+  return (
+    <div className="mt-1 text-xs">
+      {!open ? (
+        <span className="flex gap-3">
+          <button type="button" className="font-semibold text-muted underline hover:text-accent" onClick={() => setOpen(true)}>Report</button>
+          <button
+            type="button"
+            className="font-semibold text-muted underline hover:text-accent"
+            onClick={() => window.confirm("Block this reviewer? You won't see any of their reviews, and they aren't told. You can unblock in the app under Profile, Privacy & data.") && run(`/reviews/${reviewId}/block-author`, undefined, "Reviewer blocked.")}
+          >
+            Block reviewer
+          </button>
+        </span>
+      ) : (
+        <span className="flex flex-wrap items-center gap-2">
+          <select aria-label="Reason for reporting" className="rounded-lg border border-line bg-surface px-2 py-1" value={reason} onChange={(e) => setReason(e.target.value)}>
+            {REPORT_REASONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+          <Button variant="secondary" className="min-h-8 px-3" onClick={() => run(`/reviews/${reviewId}/report`, { reason }, "Thanks. Our moderators will check this review.")}>Send report</Button>
+          <button type="button" className="text-muted underline" onClick={() => setOpen(false)}>Cancel</button>
+        </span>
+      )}
+      {error ? <ErrorBox error={error} /> : null}
+    </div>
+  );
+}
 
 export function ProductReviews({ productId }: { productId: string }) {
   const { me } = useAuth();
@@ -163,14 +211,20 @@ export function ProductReviews({ productId }: { productId: string }) {
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
   const [error, setError] = useState<unknown>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   if (!r.data) return null;
   return (
     <Card className="text-sm">
       <SectionTitle>Community reviews</SectionTitle>
+      {notice && <p role="status" className="mb-2 rounded-lg bg-good-soft p-2 text-good">{notice}</p>}
       <p className="text-muted">{r.data.count ? `${r.data.average} / 5 from ${r.data.count} review(s)` : "No reviews yet."} Reviews are opinions and don&apos;t affect the health score.</p>
       <ul className="mt-2 space-y-2">
         {r.data.reviews.slice(0, 5).map((x) => (
-          <li key={x.id} className="rounded-xl bg-surface-2 p-2"><span aria-label={`${x.rating} out of 5`}>{"★".repeat(x.rating)}{"☆".repeat(5 - x.rating)}</span>{x.body && <p className="mt-0.5">{x.body}</p>}</li>
+          <li key={x.id} className="rounded-xl bg-surface-2 p-2">
+            <span aria-label={`${x.rating} out of 5`}>{"★".repeat(x.rating)}{"☆".repeat(5 - x.rating)}</span>
+            {x.body && <p className="mt-0.5">{x.body}</p>}
+            {me && !x.mine && <ReviewActions reviewId={x.id} onDone={(m) => { setNotice(m); r.reload(); }} />}
+          </li>
         ))}
       </ul>
       {me && (

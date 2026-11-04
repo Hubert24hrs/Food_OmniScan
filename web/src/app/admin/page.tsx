@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminAnalytics, AdminArticles } from "@/components/AdminContent";
+import { AdminAnalytics, AdminArticles, AdminReviews } from "@/components/AdminContent";
 import { useState } from "react";
 import { api, assetUrl } from "@/lib/api";
 import { dateTime } from "@/lib/format";
@@ -14,14 +14,14 @@ type Method = { version: string; name: string; is_active: boolean; notes: string
 type Log = { id: string; action: string; entity: string; entity_id: string; note: string | null; created_at: string; actor_id: string };
 type U = { id: string; email: string; role: string; is_active: boolean; country: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Submissions", "Scoring", "Recalls", "Articles", "Users", "Audit log"] as const;
+const TABS = ["Overview", "Analytics", "Submissions", "Reviews", "Scoring", "Recalls", "Articles", "Users", "Audit log"] as const;
 
 export default function AdminPage() {
   const { me } = useRequireAuth();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   if (!me) return null;
   if (me.role !== "admin" && me.role !== "moderator") return <Page><EmptyState title="Admins only" body="You don't have access to the admin console." /></Page>;
-  const visible = me.role === "admin" ? TABS : (["Overview", "Submissions"] as const);
+  const visible = me.role === "admin" ? TABS : (["Overview", "Submissions", "Reviews"] as const);
   return (
     <Page title="Admin console" subtitle={`Signed in as ${me.role}. Every action is audit-logged.`}>
       <div className="mb-4 flex flex-wrap gap-2" role="tablist">
@@ -33,6 +33,7 @@ export default function AdminPage() {
       {tab === "Analytics" && <AdminAnalytics />}
       {tab === "Articles" && <AdminArticles />}
       {tab === "Submissions" && <Submissions />}
+      {tab === "Reviews" && <AdminReviews />}
       {tab === "Scoring" && <Scoring />}
       {tab === "Recalls" && <Recalls />}
       {tab === "Users" && <Users />}

@@ -15,6 +15,7 @@ class AdminScreen extends StatelessWidget {
     const tabs = [
       ('Overview', _Overview()),
       ('Moderation', _Moderation()),
+      ('Reviews', _ReportedReviews()),
       ('Products', _Products()),
       ('Ingredients', _Ingredients()),
       ('Research', _Research()),
@@ -804,4 +805,50 @@ class _Audit extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// Reviews people reported. Three reports hide a review until a moderator publishes or hides it.
+class _ReportedReviews extends StatelessWidget {
+  const _ReportedReviews();
+
+  @override
+  Widget build(BuildContext context) => ApiView(
+        path: '/admin/reviews/reported',
+        builder: (context, data, reload) {
+          final rows = (data as List).cast<Map<String, dynamic>>();
+          if (rows.isEmpty) return const Center(child: Text('No reported reviews.'));
+          return ListView(padding: const EdgeInsets.all(12), children: [
+            for (final r in rows)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${r['reports']} report(s) · ${(r['reasons'] as List).join(', ')} · ${r['status']}',
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text('${'★' * (r['rating'] as int)} ${r['title'] ?? ''}'),
+                    if (r['body'] != null) Text(r['body'] as String),
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 8, children: [
+                      FilledButton.tonal(
+                        onPressed: () async {
+                          await runAction(context, () => _api(context).post('/admin/reviews/${r['id']}/moderate', {'action': 'publish'}), ok: 'Published');
+                          await reload();
+                        },
+                        child: const Text('Keep published'),
+                      ),
+                      OutlinedButton(
+                        onPressed: () async {
+                          await runAction(context, () => _api(context).post('/admin/reviews/${r['id']}/moderate', {'action': 'hide'}), ok: 'Hidden');
+                          await reload();
+                        },
+                        child: const Text('Hide'),
+                      ),
+                    ]),
+                  ]),
+                ),
+              ),
+          ]);
+        },
+      );
 }

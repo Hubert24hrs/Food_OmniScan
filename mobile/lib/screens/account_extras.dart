@@ -349,6 +349,13 @@ class PrivacyScreen extends StatelessWidget {
             await app.refresh();
           },
         ),
+        ListTile(
+          leading: const Icon(Icons.block),
+          title: const Text('Blocked reviewers'),
+          subtitle: const Text("People whose reviews you don't see."),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BlockedReviewersScreen())),
+        ),
         const Divider(height: 32),
         ListTile(
           leading: const Icon(Icons.delete_forever_outlined, color: Brand.tomato),
@@ -378,6 +385,40 @@ class PrivacyScreen extends StatelessWidget {
           },
         ),
       ]),
+    );
+  }
+}
+
+class BlockedReviewersScreen extends StatelessWidget {
+  const BlockedReviewersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.read<AppState>();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Blocked reviewers')),
+      body: ApiView(
+        path: '/me/blocks',
+        builder: (context, data, reload) {
+          final rows = (data as List).cast<Map<String, dynamic>>();
+          if (rows.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24), child: Text("You haven't blocked anyone.")));
+          return ListView(children: [
+            for (final (i, b) in rows.indexed)
+              ListTile(
+                leading: const Icon(Icons.person_off_outlined),
+                title: Text('Blocked reviewer ${i + 1}'),
+                subtitle: Text('Since ${(b['created_at'] as String).substring(0, 10)}'),
+                trailing: TextButton(
+                  onPressed: () async {
+                    await runAction(context, () => app.api.delete('/me/blocks/${b['id']}'), ok: 'Unblocked');
+                    await reload();
+                  },
+                  child: const Text('Unblock'),
+                ),
+              ),
+          ]);
+        },
+      ),
     );
   }
 }

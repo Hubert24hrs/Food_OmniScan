@@ -13,8 +13,10 @@ from app.models import (
     FoodScan,
     Product,
     ProductComparison,
+    ReviewReport,
     ScanHistory,
     User,
+    UserBlock,
     UserReview,
 )
 from app.services import alerts
@@ -353,13 +355,14 @@ class ReviewIn(BaseModel):
 
 
 @router.get("/products/{product_id}/reviews")
-def list_reviews(product_id: str, db: DB):
-    rows = db.scalars(
-        select(UserReview)
-        .where(UserReview.product_id == product_id, UserReview.status == "published")
-        .order_by(UserReview.created_at.desc())
-        .limit(50)
-    ).all()
+def list_reviews(product_id: str, db: DB, user: OptionalUser):
+    q = select(UserReview).where(UserReview.product_id == product_id, UserReview.status == "published")
+    if user:
+        # Hide reviews by people this user blocked, and reviews they already reported.
+        blocked = select(UserBlock.blocked_user_id).where(UserBlock.user_id == user.id)
+        reported = select(ReviewReport.review_id).where(ReviewReport.reporter_user_id == user.id)
+        q = q.where(UserReview.user_id.not_in(blocked), UserReview.id.not_in(reported))
+    rows = db.scalars(q.order_by(UserReview.created_at.desc()).limit(50)).all()
     avg = db.scalar(
         select(func.avg(UserReview.rating)).where(UserReview.product_id == product_id, UserReview.status == "published")
     )
@@ -367,10 +370,79 @@ def list_reviews(product_id: str, db: DB):
         "average": round(avg, 2) if avg else None,
         "count": len(rows),
         "reviews": [
-            {"id": r.id, "rating": r.rating, "title": r.title, "body": r.body, "created_at": r.created_at.isoformat()}
+            {
+                "id": r.id,
+                "rating": r.rating,
+                "title": r.title,
+                "body": r.body,
+                "created_at": r.created_at.isoformat(),
+                "mine": bool(user and r.user_id == user.id),
+            }
             for r in rows
         ],
     }
+
+
+# Distinct reports that hide a review until a moderator looks at it.
+REPORT_HIDE_THRESHOLD = 3
+
+
+class ReviewReportIn(BaseModel):
+    reason: str = Field(pattern="^(spam|offensive|false_info|other)$")
+    note: str | None = Field(default=None, max_length=500)
+
+
+def _review(db, review_id: str) -> UserReview:
+    r = db.get(UserReview, review_id)
+    if not r or r.status != "published":
+        raise HTTPException(404, "Review not found")
+    return r
+
+
+@router.post("/reviews/{review_id}/report", status_code=201)
+def report_review(review_id: str, body: ReviewReportIn, db: DB, user: CurrentUser):
+    r = _review(db, review_id)
+    if r.user_id == user.id:
+        raise HTTPException(400, "You can't report your own review")
+    if not db.scalar(
+        select(ReviewReport).where(ReviewReport.review_id == r.id, ReviewReport.reporter_user_id == user.id)
+    ):
+        db.add(ReviewReport(review_id=r.id, reporter_user_id=user.id, reason=body.reason, note=body.note))
+        db.flush()
+    open_reports = db.scalar(
+        select(func.count()).select_from(ReviewReport).where(ReviewReport.review_id == r.id, ~ReviewReport.resolved)
+    )
+    if open_reports >= REPORT_HIDE_THRESHOLD:
+        r.status = "hidden"
+    db.commit()
+    return {"reported": True, "hidden_for_everyone": r.status == "hidden"}
+
+
+@router.post("/reviews/{review_id}/block-author", status_code=201)
+def block_review_author(review_id: str, db: DB, user: CurrentUser):
+    r = _review(db, review_id)
+    if r.user_id == user.id:
+        raise HTTPException(400, "You can't block yourself")
+    if not db.scalar(select(UserBlock).where(UserBlock.user_id == user.id, UserBlock.blocked_user_id == r.user_id)):
+        db.add(UserBlock(user_id=user.id, blocked_user_id=r.user_id))
+        db.commit()
+    return {"blocked": True}
+
+
+@router.get("/me/blocks")
+def my_blocks(db: DB, user: CurrentUser):
+    rows = db.scalars(select(UserBlock).where(UserBlock.user_id == user.id).order_by(UserBlock.created_at.desc())).all()
+    # The blocked person's identity is never revealed; reviews are anonymous.
+    return [{"id": b.id, "created_at": b.created_at.isoformat()} for b in rows]
+
+
+@router.delete("/me/blocks/{block_id}", status_code=204)
+def unblock(block_id: str, db: DB, user: CurrentUser):
+    b = db.get(UserBlock, block_id)
+    if not b or b.user_id != user.id:
+        raise HTTPException(404, "Not found")
+    db.delete(b)
+    db.commit()
 
 
 @router.put("/products/{product_id}/reviews")

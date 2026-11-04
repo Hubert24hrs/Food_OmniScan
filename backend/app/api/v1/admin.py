@@ -19,6 +19,7 @@ from app.models import (
     Product,
     ProductBarcode,
     ProductRecall,
+    ReviewReport,
     ScanHistory,
     ScientificSource,
     ScoringMethodology,
@@ -26,6 +27,7 @@ from app.models import (
     Subscription,
     SubscriptionEntitlement,
     User,
+    UserReview,
 )
 from app.services import product_service as ps
 from app.services.audit import audit, snapshot
@@ -828,3 +830,66 @@ def broadcast(body: BroadcastIn, db: DB, admin: Admin, request: Request):
     )
     db.commit()
     return {"recipients": len(ids)}
+
+
+# ---------------------------------------------------------------- reported reviews
+
+
+@router.get("/reviews/reported")
+def reported_reviews(db: DB, mod: Moderator):
+    """Reviews with open reports, most-reported first (hidden ones included)."""
+    counts = (
+        select(ReviewReport.review_id, func.count().label("n"))
+        .where(~ReviewReport.resolved)
+        .group_by(ReviewReport.review_id)
+        .subquery()
+    )
+    rows = db.execute(
+        select(UserReview, counts.c.n).join(counts, counts.c.review_id == UserReview.id).order_by(counts.c.n.desc())
+    ).all()
+    out = []
+    for r, n in rows:
+        reasons = db.scalars(
+            select(ReviewReport.reason).where(ReviewReport.review_id == r.id, ~ReviewReport.resolved)
+        ).all()
+        out.append(
+            {
+                "id": r.id,
+                "product_id": r.product_id,
+                "rating": r.rating,
+                "title": r.title,
+                "body": r.body,
+                "status": r.status,
+                "reports": n,
+                "reasons": sorted(set(reasons)),
+                "created_at": r.created_at.isoformat(),
+            }
+        )
+    return out
+
+
+class ReviewModerationIn(BaseModel):
+    action: str = Field(pattern="^(publish|hide)$")
+
+
+@router.post("/reviews/{review_id}/moderate")
+def moderate_review(review_id: str, body: ReviewModerationIn, db: DB, mod: Moderator, request: Request):
+    r = db.get(UserReview, review_id)
+    if not r:
+        raise HTTPException(404, "Review not found")
+    before = {"status": r.status}
+    r.status = "published" if body.action == "publish" else "hidden"
+    for rep in db.scalars(select(ReviewReport).where(ReviewReport.review_id == r.id, ~ReviewReport.resolved)).all():
+        rep.resolved = True
+    audit(
+        db,
+        mod,
+        f"review.{body.action}",
+        "user_review",
+        r.id,
+        before=before,
+        after={"status": r.status},
+        ip=request_ip(request),
+    )
+    db.commit()
+    return {"id": r.id, "status": r.status}

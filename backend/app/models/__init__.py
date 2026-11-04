@@ -10,9 +10,11 @@ from app.models.activity import (
     ProductAlternative,
     ProductComparison,
     Recipe,
+    ReviewReport,
     ScanHistory,
     ShoppingList,
     ShoppingListItem,
+    UserBlock,
     UserReview,
 )
 from app.models.commerce import (

@@ -11,6 +11,7 @@ import 'package:food_omniscan/screens/assistant_screen.dart';
 import 'package:food_omniscan/screens/diary_screen.dart';
 import 'package:food_omniscan/screens/explore_hub.dart';
 import 'package:food_omniscan/screens/paywall_screen.dart';
+import 'package:food_omniscan/screens/product_extras.dart';
 import 'package:food_omniscan/widgets/common.dart';
 import 'package:food_omniscan/widgets/fresh.dart';
 import 'package:food_omniscan/widgets/analysis_view.dart';
@@ -412,6 +413,42 @@ void main() {
       final chip = tester.getRect(find.byType(ActionChip));
       expect(name.right, lessThanOrEqualTo(chip.left), reason: 'name overlaps the button at width $width');
     }
+  });
+
+  testWidgets("other people's reviews can be reported; your own review has no report menu", (tester) async {
+    final posted = <String, Object?>{};
+    final api = ApiClient(
+      baseUrl: 'http://api.test/api/v1',
+      client: MockClient((req) async {
+        if (req.method == 'POST') {
+          posted[req.url.path] = jsonDecode(req.body);
+          return http.Response(jsonEncode({'reported': true, 'hidden_for_everyone': false}), 201);
+        }
+        return http.Response(
+            jsonEncode({
+              'average': 3.0,
+              'count': 2,
+              'reviews': [
+                {'id': 'r1', 'rating': 1, 'body': 'Buy cheap pills here', 'mine': false},
+                {'id': 'r2', 'rating': 5, 'body': 'My own review', 'mine': true},
+              ],
+            }),
+            200);
+      }),
+    );
+    final app = AppState(api: api)..me = {'id': 'u1', 'tier': 'free'};
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: app, child: const MaterialApp(home: Scaffold(body: SingleChildScrollView(child: ReviewsCard(productId: 'p1'))))));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Report or block'), findsOneWidget); // only on the other person's review
+    await tester.tap(find.byTooltip('Report or block'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Report review'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Offensive or abusive'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Report'));
+    await tester.pumpAndSettle();
+    expect(posted['/api/v1/reviews/r1/report'], {'reason': 'offensive'});
   });
 
   testWidgets('locked features in Explore open the plans for free users', (tester) async {
