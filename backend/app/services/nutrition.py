@@ -19,6 +19,49 @@ FDA_DV = {
     "protein": 50.0,
 }
 
+# Vitamins and minerals: key -> (label, unit, FDA Daily Value for adults, Open Food Facts key, FDC number).
+# DVs from 21 CFR 101.9(c)(8)(iv) (2016 rule). Stored per 100 g in NutritionFacts.extra["micros"].
+MICROS: dict[str, tuple[str, str, float, str, str]] = {
+    "vitamin_d": ("Vitamin D", "mcg", 20, "vitamin-d", "328"),
+    "calcium": ("Calcium", "mg", 1300, "calcium", "301"),
+    "iron": ("Iron", "mg", 18, "iron", "303"),
+    "potassium": ("Potassium", "mg", 4700, "potassium", "306"),
+    "vitamin_a": ("Vitamin A", "mcg", 900, "vitamin-a", "320"),
+    "vitamin_c": ("Vitamin C", "mg", 90, "vitamin-c", "401"),
+    "vitamin_e": ("Vitamin E", "mg", 15, "vitamin-e", "323"),
+    "vitamin_k": ("Vitamin K", "mcg", 120, "vitamin-k", "430"),
+    "thiamin": ("Thiamin (B1)", "mg", 1.2, "vitamin-b1", "404"),
+    "riboflavin": ("Riboflavin (B2)", "mg", 1.3, "vitamin-b2", "405"),
+    "niacin": ("Niacin (B3)", "mg", 16, "vitamin-pp", "406"),
+    "vitamin_b6": ("Vitamin B6", "mg", 1.7, "vitamin-b6", "415"),
+    "folate": ("Folate", "mcg", 400, "vitamin-b9", "435"),
+    "vitamin_b12": ("Vitamin B12", "mcg", 2.4, "vitamin-b12", "418"),
+    "magnesium": ("Magnesium", "mg", 420, "magnesium", "304"),
+    "zinc": ("Zinc", "mg", 11, "zinc", "309"),
+    "phosphorus": ("Phosphorus", "mg", 1250, "phosphorus", "305"),
+    "selenium": ("Selenium", "mcg", 55, "selenium", "317"),
+}
+_UNIT_FROM_G = {"mg": 1000, "mcg": 1_000_000}
+
+
+def micros_from_off(nutriments: dict) -> dict:
+    """OFF reports *_100g values in grams; convert to each micronutrient's label unit."""
+    out = {}
+    for key, (_, unit, _dv, off_key, _n) in MICROS.items():
+        v = nutriments.get(f"{off_key}_100g")
+        try:
+            v = float(v) if v not in (None, "") else None
+        except (TypeError, ValueError):
+            v = None
+        if v is not None and v >= 0:
+            out[key] = round(v * _UNIT_FROM_G[unit], 3)
+    return out
+
+
+def scale_micros(micros: dict | None, factor: float) -> dict:
+    return {k: round(v * factor, 3) for k, v in (micros or {}).items() if v is not None}
+
+
 NUTRIENT_FIELDS = (
     "energy_kcal",
     "energy_kj",
@@ -148,6 +191,9 @@ def from_off(product: dict) -> NutritionInput | None:
         fruits_veg_nuts_pct=g("fruits-vegetables-nuts-estimate-from-ingredients") or g("fruits-vegetables-nuts"),
         serving_size_g=serving_g if serving_g and serving_g > 0 else None,
     )
+    micros = micros_from_off(n)
+    if micros:
+        ni.extra["micros"] = micros
     return ni if ni.core_present() else None
 
 

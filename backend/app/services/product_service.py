@@ -124,6 +124,8 @@ def _set_nutrition(
         setattr(row, f, getattr(n, f))
     row.fruits_veg_nuts_pct = n.fruits_veg_nuts_pct
     row.serving_size_g = n.serving_size_g
+    if n.extra.get("micros"):
+        row.extra = {**(row.extra or {}), "micros": n.extra["micros"]}
     row.source = source
     row.confidence = confidence
 
@@ -137,6 +139,7 @@ def nutrition_input(product: Product) -> NutritionInput | None:
         fruits_veg_nuts_pct=row.fruits_veg_nuts_pct,
         serving_size_g=row.serving_size_g,
         is_beverage=product.is_beverage or row.basis == "100ml",
+        extra=dict(row.extra or {}),
     )
 
 

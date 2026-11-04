@@ -9,16 +9,20 @@ from fastapi.responses import JSONResponse
 import app.models  # noqa: F401  (register models)
 from app.api.v1 import (
     admin,
+    admin_content,
     analysis,
     assistant,
     auth,
     billing,
     diary,
+    explore,
     history,
     ingredients,
+    kitchen,
     me,
     products,
     profiles,
+    recipes,
     shopping,
     submissions,
 )
@@ -125,7 +129,11 @@ def create_app() -> FastAPI:
         diary,
         assistant,
         billing,
+        recipes,
+        kitchen,
+        explore,
         admin,
+        admin_content,
     ):
         app.include_router(r.router, prefix="/api/v1")
     return app

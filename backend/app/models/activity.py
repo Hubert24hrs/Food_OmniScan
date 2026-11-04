@@ -123,6 +123,7 @@ class ShoppingList(IdMixin, TimestampMixin, Base):
     owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(120))
     shared_with_family: Mapped[bool] = mapped_column(Boolean, default=False)
+    household_id: Mapped[str | None] = mapped_column(ForeignKey("households.id", ondelete="SET NULL"), index=True)
 
     items: Mapped[list["ShoppingListItem"]] = relationship(
         cascade="all, delete-orphan", order_by="ShoppingListItem.created_at"
@@ -167,6 +168,7 @@ class MealEntry(IdMixin, Base):
     fiber: Mapped[float | None] = mapped_column(Float)
     sugars: Mapped[float | None] = mapped_column(Float)
     sodium: Mapped[float | None] = mapped_column(Float)
+    micros: Mapped[dict | None] = mapped_column(JSONType)  # vitamins/minerals scaled to the portion
     source: Mapped[str] = mapped_column(String(20))  # product | manual | ai_estimate
     is_estimate: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -186,12 +188,19 @@ class Recipe(IdMixin, TimestampMixin, Base):
     __tablename__ = "recipes"
 
     title: Mapped[str] = mapped_column(String(200), index=True)
+    description: Mapped[str | None] = mapped_column(Text)
     cuisine: Mapped[str | None] = mapped_column(String(60))
     region: Mapped[str | None] = mapped_column(String(8))
     ingredients: Mapped[list] = mapped_column(JSONType, default=list)
     steps: Mapped[list] = mapped_column(JSONType, default=list)
     nutrition: Mapped[dict | None] = mapped_column(JSONType)
     nutrition_is_estimate: Mapped[bool] = mapped_column(Boolean, default=True)
+    servings: Mapped[int] = mapped_column(Integer, default=4)
+    time_minutes: Mapped[int | None] = mapped_column(Integer)
+    tags: Mapped[list] = mapped_column(JSONType, default=list)  # e.g. nigerian, breakfast, one-pot
+    diet_tags: Mapped[list] = mapped_column(JSONType, default=list)  # vegan, gluten_free...
+    preparation_notes: Mapped[str | None] = mapped_column(Text)  # how cooking method affects nutrition
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True)
     source: Mapped[str | None] = mapped_column(String(300))
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by: Mapped[str | None] = mapped_column(String(36))

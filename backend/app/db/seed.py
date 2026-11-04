@@ -9,12 +9,15 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.data.content_seed import ARTICLES, LOCAL_INGREDIENT_NAMES, RECIPES
 from app.data.ingredients_seed import INGREDIENTS
 from app.data.sources_seed import SOURCES
 from app.models import (
+    Article,
     FoodAdditive,
     Ingredient,
     IngredientSynonym,
+    Recipe,
     ScientificSource,
     ScoringMethodology,
     ScoringRule,
@@ -149,12 +152,64 @@ def seed_entitlements(db: Session) -> int:
     return n
 
 
+_LANG = {"yoruba": "yo", "igbo": "ig", "hausa": "ha"}
+
+
+def seed_local_names(db: Session) -> int:
+    """Yoruba, Igbo and Hausa names as synonyms of existing KB ingredients (region NG)."""
+    n = 0
+    for row in LOCAL_INGREDIENT_NAMES:
+        english = normalize_term(row["name"].split("(")[0])
+        alt = normalize_term(row["name"].split("(")[1].rstrip(")")) if "(" in row["name"] else None
+        syn = db.scalar(select(IngredientSynonym).where(IngredientSynonym.term.in_([t for t in (english, alt) if t])))
+        if syn is None:
+            continue
+        for key, lang in _LANG.items():
+            term = normalize_term(row.get(key) or "")
+            if not term:
+                continue
+            if db.scalar(
+                select(IngredientSynonym).where(IngredientSynonym.term == term, IngredientSynonym.language == lang)
+            ):
+                continue
+            db.add(IngredientSynonym(ingredient_id=syn.ingredient_id, term=term, language=lang, region="NG"))
+            n += 1
+    db.flush()
+    invalidate_kb()
+    return n
+
+
+def seed_recipes(db: Session) -> int:
+    n = 0
+    for r in RECIPES:
+        if db.scalar(select(Recipe).where(Recipe.title == r["title"], Recipe.created_by.is_(None))):
+            continue
+        db.add(Recipe(**r, nutrition=None, nutrition_is_estimate=True, verified=False, is_public=True))
+        n += 1
+    db.flush()
+    return n
+
+
+def seed_articles(db: Session) -> int:
+    n = 0
+    for a in ARTICLES:
+        if db.scalar(select(Article).where(Article.slug == a["slug"])):
+            continue
+        db.add(Article(**a, status="published", published_at=datetime.now(UTC)))
+        n += 1
+    db.flush()
+    return n
+
+
 def run(db: Session) -> dict:
     out = {
         "sources": seed_sources(db),
         "ingredients": seed_ingredients(db),
         "methodology": seed_methodology(db),
         "entitlements": seed_entitlements(db),
+        "local_names": seed_local_names(db),
+        "recipes": seed_recipes(db),
+        "articles": seed_articles(db),
     }
     db.commit()
     return out

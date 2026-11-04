@@ -10,6 +10,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.db
+*.db.bak*
 backend/uploads/
 
 # Node / Next.js

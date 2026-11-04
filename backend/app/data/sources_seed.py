@@ -294,4 +294,129 @@ SOURCES: list[dict] = [
         "evidence_quality": "moderate",
         "summary": "Crowd-sourced product database, available under the Open Database License (ODbL).",
     },
+    # ---- contaminants & food safety (category-level evidence, never product-specific)
+    {
+        "key": "fda_closer_to_zero",
+        "title": "Closer to Zero: Reducing Childhood Exposure to Contaminants from Foods",
+        "publisher": "U.S. Food and Drug Administration",
+        "year": 2021,
+        "url": "https://www.fda.gov/food/environmental-contaminants-food/closer-zero-reducing-childhood-exposure-contaminants-foods",
+        "source_type": "guideline",
+        "evidence_quality": "high",
+        "summary": "FDA action plan to reduce lead, arsenic, cadmium and mercury in foods eaten by babies and young "
+        "children, by setting action levels over time.",
+    },
+    {
+        "key": "fda_epa_fish_advice",
+        "title": "Advice about Eating Fish (for those who might become or are pregnant or breastfeeding, and children)",
+        "publisher": "U.S. Food and Drug Administration & U.S. Environmental Protection Agency",
+        "year": 2021,
+        "url": "https://www.fda.gov/food/consumers/advice-about-eating-fish",
+        "source_type": "guideline",
+        "evidence_quality": "high",
+        "summary": "Groups fish into best choices, good choices and choices to avoid based on mercury levels, and "
+        "recommends 2-3 servings a week of lower-mercury fish.",
+    },
+    {
+        "key": "efsa_microplastics_2016",
+        "title": "Presence of microplastics and nanoplastics in food, with particular focus on seafood",
+        "publisher": "EFSA Panel on Contaminants in the Food Chain (EFSA Journal 14(6):4501)",
+        "year": 2016,
+        "source_type": "agency_opinion",
+        "evidence_quality": "low",
+        "summary": "EFSA found data too limited to assess the risk of micro- and nanoplastics in food, and called for "
+        "better analytical methods and occurrence data.",
+    },
+    {
+        "key": "who_microplastics_2019",
+        "title": "Microplastics in drinking-water",
+        "publisher": "World Health Organization",
+        "year": 2019,
+        "source_type": "agency_opinion",
+        "evidence_quality": "low",
+        "summary": "WHO concluded that, based on limited information, microplastics in drinking water don't appear to "
+        "pose a health risk at current levels, and that more research is needed.",
+    },
+    {
+        "key": "iarc_vol112_glyphosate",
+        "title": "IARC Monographs Volume 112: Some organophosphate insecticides and herbicides (glyphosate)",
+        "publisher": "International Agency for Research on Cancer",
+        "year": 2017,
+        "source_type": "agency_opinion",
+        "evidence_quality": "moderate",
+        "summary": "IARC classified glyphosate as probably carcinogenic to humans (Group 2A). This is a hazard "
+        "classification: it doesn't estimate risk at dietary exposure levels.",
+    },
+    {
+        "key": "efsa_glyphosate_2023",
+        "title": "Peer review of the pesticide risk assessment of the active substance glyphosate",
+        "publisher": "European Food Safety Authority",
+        "year": 2023,
+        "source_type": "agency_opinion",
+        "evidence_quality": "moderate",
+        "summary": "EFSA identified no critical areas of concern for human health from glyphosate when used as "
+        "authorised, while noting some data gaps.",
+    },
+    {
+        "key": "fda_pesticide_monitoring",
+        "title": "Pesticide Residue Monitoring Program reports",
+        "publisher": "U.S. Food and Drug Administration",
+        "year": 2024,
+        "url": "https://www.fda.gov/food/chemical-contaminants-pesticides/pesticides",
+        "source_type": "database",
+        "evidence_quality": "high",
+        "summary": "Annual FDA testing of domestic and imported foods for pesticide residues against EPA tolerances. "
+        "Results are reported by commodity, not by brand.",
+    },
+    {
+        "key": "efsa_pesticide_residues",
+        "title": "EU report on pesticide residues in food (annual)",
+        "publisher": "European Food Safety Authority",
+        "year": 2024,
+        "source_type": "database",
+        "evidence_quality": "high",
+        "summary": "Annual EU-wide monitoring of pesticide residues against maximum residue levels (MRLs), "
+        "reported by food type.",
+    },
+    {
+        "key": "fda_lead_in_food",
+        "title": "Lead in Food and Foodwares",
+        "publisher": "U.S. Food and Drug Administration",
+        "year": 2024,
+        "url": "https://www.fda.gov/food/environmental-contaminants-food/lead-food-and-foodwares",
+        "source_type": "guideline",
+        "evidence_quality": "high",
+        "summary": "FDA overview of lead in food, interim reference levels, and action levels such as those for "
+        "processed foods intended for babies and young children.",
+    },
+    {
+        "key": "iarc_aflatoxins",
+        "title": "IARC Monographs Volume 100F: Aflatoxins",
+        "publisher": "International Agency for Research on Cancer",
+        "year": 2012,
+        "source_type": "agency_opinion",
+        "evidence_quality": "high",
+        "summary": "Naturally occurring aflatoxins are carcinogenic to humans (Group 1). They're produced by moulds "
+        "on poorly stored groundnuts, maize and other crops.",
+    },
+    # ---- African food data and regulation
+    {
+        "key": "fao_wafct_2019",
+        "title": "FAO/INFOODS Food Composition Table for Western Africa (2019)",
+        "publisher": "Food and Agriculture Organization of the United Nations",
+        "year": 2019,
+        "source_type": "database",
+        "evidence_quality": "high",
+        "summary": "Nutrient values for foods commonly eaten in West Africa, including Nigerian staples and dishes.",
+    },
+    {
+        "key": "nafdac_greenbook",
+        "title": "NAFDAC Greenbook: registered products database",
+        "publisher": "National Agency for Food and Drug Administration and Control (Nigeria)",
+        "year": 2026,
+        "url": "https://greenbook.nafdac.gov.ng/",
+        "source_type": "database",
+        "evidence_quality": "high",
+        "summary": "Public register of NAFDAC-registered products. Use it to check a product's registration number.",
+    },
 ]

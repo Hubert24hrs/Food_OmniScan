@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.core.deps import DB, CurrentUser
 from app.models import Product, ShoppingList, ShoppingListItem
 from app.services import entitlements as ent
+from app.services import households as hh
 
 router = APIRouter(prefix="/shopping-lists", tags=["shopping"])
 
@@ -14,6 +15,7 @@ def list_out(sl: ShoppingList) -> dict:
         "id": sl.id,
         "name": sl.name,
         "shared_with_family": sl.shared_with_family,
+        "household_id": sl.household_id,
         "items": [
             {"id": i.id, "text": i.text, "quantity": i.quantity, "checked": i.checked, "product_id": i.product_id}
             for i in sl.items
@@ -24,7 +26,7 @@ def list_out(sl: ShoppingList) -> dict:
 
 def _owned(db, user, list_id) -> ShoppingList:
     sl = db.get(ShoppingList, list_id)
-    if not sl or sl.owner_user_id != user.id:
+    if not sl or not hh.can_access(db, user, sl.owner_user_id, sl.household_id):
         raise HTTPException(404, "List not found")
     return sl
 
@@ -36,11 +38,13 @@ class ListIn(BaseModel):
 
 @router.get("")
 def all_lists(db: DB, user: CurrentUser):
+    hid = hh.household_id(db, user)
+    cond = ShoppingList.owner_user_id == user.id
+    if hid:
+        cond = or_(cond, ShoppingList.household_id == hid)
     return [
         list_out(sl)
-        for sl in db.scalars(
-            select(ShoppingList).where(ShoppingList.owner_user_id == user.id).order_by(ShoppingList.updated_at.desc())
-        ).all()
+        for sl in db.scalars(select(ShoppingList).where(cond).order_by(ShoppingList.updated_at.desc())).all()
     ]
 
 
@@ -48,7 +52,8 @@ def all_lists(db: DB, user: CurrentUser):
 def create(body: ListIn, db: DB, user: CurrentUser):
     count = len(db.scalars(select(ShoppingList.id).where(ShoppingList.owner_user_id == user.id)).all())
     ent.count_cap(db, user, "shopping_lists", count)
-    sl = ShoppingList(owner_user_id=user.id, name=body.name, shared_with_family=body.shared_with_family)
+    hid = hh.household_id(db, user) if body.shared_with_family else None
+    sl = ShoppingList(owner_user_id=user.id, name=body.name, shared_with_family=bool(hid), household_id=hid)
     db.add(sl)
     db.commit()
     return list_out(sl)
@@ -56,8 +61,38 @@ def create(body: ListIn, db: DB, user: CurrentUser):
 
 @router.delete("/{list_id}", status_code=204)
 def delete(list_id: str, db: DB, user: CurrentUser):
-    db.delete(_owned(db, user, list_id))
+    sl = _owned(db, user, list_id)
+    if sl.owner_user_id != user.id:
+        raise HTTPException(403, "Only the person who made this list can delete it")
+    db.delete(sl)
     db.commit()
+
+
+def add_lines(db, sl: ShoppingList, user, lines: list[dict]) -> int:
+    """Add recipe or plan ingredients, skipping ones already on the list (case-insensitive)."""
+    have = {i.text.strip().lower() for i in sl.items}
+    n = 0
+    for line in lines:
+        text = line["text"].strip()[:200]
+        if not text or text.lower() in have:
+            continue
+        sl.items.append(
+            ShoppingListItem(list_id=sl.id, text=text, quantity=(line.get("quantity") or None), added_by=user.id)
+        )
+        have.add(text.lower())
+        n += 1
+    return n
+
+
+def target_list(db, user, list_id: str | None, name: str) -> ShoppingList:
+    if list_id:
+        return _owned(db, user, list_id)
+    count = len(db.scalars(select(ShoppingList.id).where(ShoppingList.owner_user_id == user.id)).all())
+    ent.count_cap(db, user, "shopping_lists", count)
+    sl = ShoppingList(owner_user_id=user.id, name=name[:120])
+    db.add(sl)
+    db.flush()
+    return sl
 
 
 class ItemIn(BaseModel):

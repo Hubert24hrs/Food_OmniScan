@@ -151,6 +151,10 @@ async def analyze_image(
     }
     if task == "ingredients" and extracted.get("ingredients_text"):
         txt = out["ingredients_text"] = ai.ingredients_with_statements(extracted)
+        tr = extracted.get("english_translation")
+        if isinstance(tr, dict) and tr.get("ingredients_text") and extracted.get("language") not in (None, "en"):
+            # Analyse the English translation; keep the original text for the user to compare.
+            txt = out["ingredients_text_english"] = ai.ingredients_with_statements(tr)
         out["analysis"] = ps.analyze_text(txt, None, cfg=ps.active_methodology(db), region=region_of(user))
     if task == "nutrition" and extracted.get("panel_text"):
         out["nutrition_label"] = parse_nutrition_label(extracted["panel_text"])

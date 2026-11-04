@@ -17,10 +17,12 @@ from app.models import (
     User,
     UserReview,
 )
+from app.services import alerts
 from app.services import alternatives as alt_svc
 from app.services import entitlements as ent
 from app.services import product_service as ps
 from app.services.barcode import InvalidBarcode, parse_barcode
+from app.services.nutrition import MICROS
 from app.services.providers import openfoodfacts as off
 from app.services.providers import usda
 from app.services.providers.base import ProviderError
@@ -83,6 +85,17 @@ def product_out(db, p: Product) -> dict:
             },
             "serving_size_g": n.serving_size_g,
             "per_serving": ni.per_serving() if ni else None,
+            "micros_per_100": [
+                {
+                    "key": k,
+                    "label": MICROS[k][0],
+                    "unit": MICROS[k][1],
+                    "amount": v,
+                    "pct_dv": round(v / MICROS[k][2] * 100),
+                }
+                for k, v in ((n.extra or {}).get("micros") or {}).items()
+                if k in MICROS
+            ],
             "source": n.source,
         },
         "provenance": {
@@ -203,6 +216,7 @@ def scan_barcode(
         scan_type="barcode",
         profile_id=profiles[0].id if profiles else None,
     )
+    alerts.scan_alerts(db, user, res.product, analysis)
     return {
         "product": product_out(db, res.product),
         "analysis": analysis,

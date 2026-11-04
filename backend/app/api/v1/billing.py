@@ -10,27 +10,43 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 
 PLAN_COPY = {
     "free": [
-        "Unlimited barcode scans",
+        "Unlimited barcode, label and nutrition scans",
         "Health score with full explanation",
-        "Allergen and diet alerts",
-        "1 profile",
-        f"{ent.DEFAULT_MATRIX['ai_assistant']['free']} AI questions/month",
+        "Allergen alerts, diet checks and recalls (always free)",
+        "Food diary, water tracking and nutrition targets",
+        "Recipes, ingredient encyclopedia and food-safety research",
+        "1 profile, 2 shopping lists",
+        f"{ent.DEFAULT_MATRIX['ai_assistant']['free']} AI questions and "
+        f"{ent.DEFAULT_MATRIX['ai_vision']['free']} AI photo reads a month",
     ],
     "plus": [
         "Everything in Free",
-        "2 profiles",
-        "Unlimited comparisons",
-        "200 healthier-alternative searches/month",
-        f"{ent.DEFAULT_MATRIX['ai_assistant']['plus']} AI questions/month",
+        "Vitamin and mineral tracking, weekly and monthly reports",
+        "Watchlist ingredient alerts",
+        "Pantry with expiry reminders",
+        "Grocery budget, shopping history and price comparison",
+        "Meal planner (4 plans), full category rankings, personalised picks",
+        "Assistant in Pidgin, Yoruba, Igbo, Hausa, French and Spanish",
+        f"{ent.DEFAULT_MATRIX['ai_assistant']['plus']} AI questions, "
+        f"{ent.DEFAULT_MATRIX['ai_vision']['plus']} AI photo reads, "
+        f"{ent.DEFAULT_MATRIX['ai_recipes']['plus']} AI recipes a month",
+        "2 profiles, unlimited comparisons",
     ],
     "premium": [
         "Everything in Plus",
-        "Unlimited alternatives",
-        "AI nutrition assistant (500/month)",
-        "AI photo label and meal recognition (300/month)",
+        "AI meal plans, including Nigerian and African dishes",
+        "Personal food-pattern insights",
+        "Unlimited meal plans, alternatives and shopping lists",
+        f"{ent.DEFAULT_MATRIX['ai_assistant']['premium']} AI questions, "
+        f"{ent.DEFAULT_MATRIX['ai_vision']['premium']} AI photo reads (meals, labels, products) a month",
         "3 profiles",
     ],
-    "family": ["Everything in Premium", "Up to 8 family profiles", "Shared shopping lists", "Higher AI limits"],
+    "family": [
+        "Everything in Premium",
+        "Household sharing: pantry, shopping lists and budget",
+        "Up to 8 family profiles",
+        "Higher AI limits",
+    ],
 }
 
 
@@ -43,6 +59,7 @@ def plans():
             "annual_usd": ent.ANNUAL_PRICES_USD.get(t),
             "features": PLAN_COPY[t],
             "limits": {f: ent.DEFAULT_MATRIX[f][t] for f in ent.DEFAULT_MATRIX},
+            "feature_labels": ent.FEATURE_LABELS,
         }
         for t in ent.TIERS
     ]

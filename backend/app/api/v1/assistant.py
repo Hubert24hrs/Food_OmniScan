@@ -28,6 +28,7 @@ class AskIn(BaseModel):
     ingredient_slugs: list[str] = Field(default_factory=list, max_length=10)
     history: list[Msg] = Field(default_factory=list, max_length=16)
     profile_id: str | None = None
+    language: str = Field("en", pattern="^(en|pcm|yo|ig|ha|fr|es)$")
 
 
 def _product_context(db, p: Product, profiles, region) -> dict:
@@ -65,6 +66,8 @@ def _product_context(db, p: Product, profiles, region) -> dict:
 
 @router.post("/ask")
 def ask(body: AskIn, db: DB, user: CurrentUser):
+    if body.language != "en":
+        ent.require_feature(db, user, "assistant_languages")
     ent.require_quota(db, user, "ai_assistant")
     try:
         provider = get_provider()
@@ -119,7 +122,7 @@ def ask(body: AskIn, db: DB, user: CurrentUser):
         profile_out(profiles[0]) if profiles else None,
     )
     try:
-        res = ai.ask(provider, body.question, ctx, [h.model_dump() for h in body.history])
+        res = ai.ask(provider, body.question, ctx, [h.model_dump() for h in body.history], body.language)
     except AIError as e:
         ent.record_usage(db, user, "ai_assistant", provider.name, getattr(provider, "model", None), ok=False)
         raise HTTPException(

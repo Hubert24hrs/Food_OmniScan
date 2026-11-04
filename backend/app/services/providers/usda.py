@@ -10,7 +10,7 @@ Branded food nutrients are reported per 100 g (or 100 ml) by FDC.
 import httpx
 
 from app.core.config import get_settings
-from app.services.nutrition import NutritionInput
+from app.services.nutrition import MICROS, NutritionInput
 from app.services.providers.base import (
     ProviderProduct,
     ProviderUnavailable,
@@ -44,12 +44,16 @@ def enabled() -> bool:
 
 def _nutrition(food: dict) -> NutritionInput | None:
     vals: dict[str, float] = {}
+    micros: dict[str, float] = {}
+    micro_numbers = {num: key for key, (*_, num) in MICROS.items()}
     for fn in food.get("foodNutrients") or []:
         num = str(fn.get("nutrientNumber") or (fn.get("nutrient") or {}).get("number") or "")
         key = N.get(num)
         val = fn.get("value", fn.get("amount"))
         if key and val is not None:
             vals.setdefault(key, float(val))
+        elif num in micro_numbers and val is not None:
+            micros.setdefault(micro_numbers[num], float(val))
     if not vals:
         return None
     sodium_mg = vals.pop("sodium_mg", None)
@@ -57,6 +61,8 @@ def _nutrition(food: dict) -> NutritionInput | None:
     unit = (food.get("servingSizeUnit") or "").lower()
     serving_g = float(serving) if serving and unit in ("g", "grm", "ml", "mlt") else None
     ni = NutritionInput(**vals, sodium=sodium_mg / 1000 if sodium_mg is not None else None, serving_size_g=serving_g)
+    if micros:
+        ni.extra["micros"] = micros
     return ni if ni.core_present() else None
 
 

@@ -24,6 +24,18 @@ from app.models.commerce import (
     SubscriptionEntitlement,
 )
 from app.models.ingredient import FoodAdditive, Ingredient, IngredientSynonym
+from app.models.lifestyle import (
+    Article,
+    BodyMetric,
+    Budget,
+    Household,
+    HouseholdMember,
+    PantryItem,
+    PriceObservation,
+    Purchase,
+    SharedReport,
+    WaterLog,
+)
 from app.models.product import (
     FoodBrand,
     FoodCategory,
