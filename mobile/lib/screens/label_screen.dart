@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/analysis_view.dart';
+import 'assistant_screen.dart' show assistantErrorText;
 
 /// Photograph ingredient / nutrition labels, read them on-device with ML Kit,
 /// let the user correct the text, then analyze it server-side.
@@ -24,9 +25,72 @@ class _LabelScreenState extends State<LabelScreen> {
   String? error;
   Map<String, dynamic>? result;
 
+  /// Which sections were filled by AI, so we can remind the user to check them.
+  final aiFilled = <TextEditingController>{};
+
+  Future<void> _choose(TextEditingController target, String task) async {
+    final signedIn = context.read<AppState>().signedIn;
+    final useAi = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            leading: const Icon(Icons.phone_android),
+            title: const Text('Read on this phone'),
+            subtitle: const Text('Free and private. Works offline.'),
+            onTap: () => Navigator.pop(c, false),
+          ),
+          ListTile(
+            enabled: signedIn,
+            leading: const Icon(Icons.auto_awesome),
+            title: const Text('Read with AI'),
+            subtitle: Text(signedIn
+                ? 'Better on curved, glossy or small print. Uses 1 AI credit; the photo is sent to Google Gemini.'
+                : 'Sign in on the Profile tab to use AI reading.'),
+            onTap: () => Navigator.pop(c, true),
+          ),
+        ]),
+      ),
+    );
+    if (useAi == null) return;
+    useAi ? await _captureAi(target, task) : await _capture(target);
+  }
+
+  Future<void> _captureAi(TextEditingController target, String task) async {
+    final photo = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2000, imageQuality: 85);
+    if (photo == null || !mounted) return;
+    final api = context.read<AppState>().api;
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      final r = await api.upload('/analysis/image', fields: {'task': task}, bytes: await photo.readAsBytes()) as Map<String, dynamic>;
+      final x = r['extracted'] as Map<String, dynamic>;
+      // The server labels the allergen statements ("Contains: …", "May contain: …") so they keep their meaning.
+      final text = task == 'ingredients'
+          ? (r['ingredients_text'] as String? ?? x['ingredients_text'] as String? ?? '')
+          : (x['panel_text'] as String? ?? '');
+      setState(() {
+        target.text = text;
+        aiFilled.add(target);
+      });
+      if (mounted && (text.trim().isEmpty || x['legibility'] == 'poor')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("The AI couldn't read much of this photo. Try more light and fill the frame.")));
+      }
+    } on ApiException catch (e) {
+      setState(() => error = assistantErrorText(e));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> _capture(TextEditingController target) async {
     final photo = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2400, imageQuality: 90);
     if (photo == null) return;
+    aiFilled.remove(target);
     setState(() => busy = true);
     final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
@@ -66,11 +130,19 @@ class _LabelScreenState extends State<LabelScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Scan a label')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        const Text('Text is read on your device. Check and correct it before analyzing.'),
+        const Text('Photograph each part of the label, then check and correct the text before analyzing.'),
         const SizedBox(height: 12),
-        _Section(title: 'Ingredients', controller: ingredients, onCapture: busy ? null : () => _capture(ingredients)),
+        _Section(
+            title: 'Ingredients',
+            controller: ingredients,
+            readByAi: aiFilled.contains(ingredients),
+            onCapture: busy ? null : () => _choose(ingredients, 'ingredients')),
         const SizedBox(height: 12),
-        _Section(title: 'Nutrition Facts', controller: nutrition, onCapture: busy ? null : () => _capture(nutrition)),
+        _Section(
+            title: 'Nutrition Facts',
+            controller: nutrition,
+            readByAi: aiFilled.contains(nutrition),
+            onCapture: busy ? null : () => _choose(nutrition, 'nutrition')),
         SwitchListTile(value: beverage, onChanged: (v) => setState(() => beverage = v), title: const Text('This is a beverage')),
         FilledButton(onPressed: busy ? null : _analyze, child: Text(busy ? 'Working…' : 'Analyze')),
         if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!, style: const TextStyle(color: Colors.red))),
@@ -81,10 +153,11 @@ class _LabelScreenState extends State<LabelScreen> {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.controller, required this.onCapture});
+  const _Section({required this.title, required this.controller, required this.onCapture, this.readByAi = false});
   final String title;
   final TextEditingController controller;
   final VoidCallback? onCapture;
+  final bool readByAi;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +169,15 @@ class _Section extends StatelessWidget {
             Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800))),
             TextButton.icon(onPressed: onCapture, icon: const Icon(Icons.photo_camera_outlined), label: const Text('Photograph')),
           ]),
+          if (readByAi)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(children: [
+                Icon(Icons.auto_awesome, size: 16, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 6),
+                const Expanded(child: Text('Read by AI. Check it against the package.', style: TextStyle(fontSize: 12))),
+              ]),
+            ),
           TextField(controller: controller, maxLines: 6, minLines: 3, decoration: InputDecoration(hintText: '$title text')),
         ]),
       ),

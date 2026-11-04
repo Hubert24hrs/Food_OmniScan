@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/analysis_view.dart';
+import 'assistant_screen.dart';
 
 /// Loads a product by barcode (scan flow) or id, with an offline cached fallback.
 class ProductScreen extends StatefulWidget {
@@ -119,6 +120,13 @@ class _ProductScreenState extends State<ProductScreen> {
             icon: const Icon(Icons.favorite_border),
             label: const Text('Save'),
           ),
+          if (!offlineCopy)
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => AssistantScreen(productId: p['id'] as String, productName: p['name'] as String?))),
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Ask AI'),
+            ),
         ]),
         const SizedBox(height: 12),
         AnalysisView(analysis: data!['analysis'] as Map<String, dynamic>),

@@ -1,6 +1,7 @@
 """AI features built on the provider abstraction: grounded assistant and vision extraction."""
 
 import json
+import re
 
 from app.services.ai.provider import AIProvider, AIResult
 
@@ -47,6 +48,26 @@ in grams with a low/high range. Then give ROUGH estimated calories, protein, car
 These are estimates, not measurements. Return JSON: {"items": [{"name": str, "preparation": str|null,
 "portion_g": number, "portion_range_g": [number, number], "energy_kcal": number, "protein_g": number, "carbs_g": number,
 "fat_g": number, "fiber_g": number, "confidence": 0.0-1.0}], "notes": str}"""
+
+
+_CONTAINS = re.compile(r"^\s*contains\s*:?\s*", re.I)
+_MAY_CONTAIN = re.compile(r"^\s*(may contain|may also contain|produced in a facility[^:]*)\s*:?\s*", re.I)
+
+
+def ingredients_with_statements(extracted: dict) -> str:
+    """Ingredients text plus allergen statements, each labelled so the parser reads them correctly.
+
+    Vision output often drops the "Contains:" / "May contain" prefix ("WHEAT."), which would
+    otherwise turn a precautionary statement into an ingredient or lose it entirely.
+    """
+    parts = [(extracted.get("ingredients_text") or "").strip()]
+    contains = (extracted.get("contains_statement") or "").strip()
+    may = (extracted.get("may_contain_statement") or "").strip()
+    if contains:
+        parts.append("Contains: " + _CONTAINS.sub("", contains))
+    if may:
+        parts.append(may if _MAY_CONTAIN.match(may) else "May contain: " + may)
+    return "\n".join(p for p in parts if p)
 
 
 def build_context(products: list[dict], sources: list[dict], profile: dict | None) -> str:

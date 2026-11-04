@@ -384,6 +384,29 @@ def test_failed_ai_call_not_charged(respx_mock, client, monkeypatch):
     assert client.get(f"{API}/me/usage", headers=h).json()["features"]["ai_assistant"]["used"] == 0
 
 
+@respx.mock(assert_all_called=False)
+def test_ai_label_photo_keeps_allergen_statements(respx_mock, client, monkeypatch):
+    """Vision output often drops "Contains:" / "May contain"; we must re-label, not lose or promote them."""
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "gemini_api_key", "test-key")
+    h = register(client)
+    extracted = {"ingredients_text": "WHOLE GRAIN OATS, SUGAR, SALT, RED 40.", "contains_statement": "WHEAT.",
+                 "may_contain_statement": "PEANUTS.", "legibility": "good", "language": "en"}
+    respx_mock.post(url__regex=r".*generateContent").respond(200, json={
+        "candidates": [{"content": {"parts": [{"text": json.dumps(extracted)}]}}],
+        "usageMetadata": {"promptTokenCount": 900, "candidatesTokenCount": 60}})
+    buf = io.BytesIO()
+    Image.new("RGB", (40, 40), "white").save(buf, "JPEG")
+    r = client.post(f"{API}/analysis/image", headers=h, data={"task": "ingredients"},
+                    files={"image": ("photo.jpg", buf.getvalue(), "image/jpeg")})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["ingredients_text"].endswith("Contains: WHEAT.\nMay contain: PEANUTS.")
+    status = {a["code"]: a["status"] for a in body["analysis"]["allergens"]}
+    assert status["wheat"] == "contains" and status["peanuts"] == "may_contain"
+
+
 def test_plans_and_meta(client):
     plans = client.get(f"{API}/billing/plans").json()
     assert [p["monthly_usd"] for p in plans] == [0, 3.99, 7.99, 11.99]

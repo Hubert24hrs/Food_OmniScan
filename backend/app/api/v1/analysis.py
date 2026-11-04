@@ -150,9 +150,7 @@ async def analyze_image(
         "notice": "Extracted by AI. Check it against the package before saving.",
     }
     if task == "ingredients" and extracted.get("ingredients_text"):
-        txt = extracted["ingredients_text"]
-        if extracted.get("may_contain_statement"):
-            txt += ". " + extracted["may_contain_statement"]
+        txt = out["ingredients_text"] = ai.ingredients_with_statements(extracted)
         out["analysis"] = ps.analyze_text(txt, None, cfg=ps.active_methodology(db), region=region_of(user))
     if task == "nutrition" and extracted.get("panel_text"):
         out["nutrition_label"] = parse_nutrition_label(extracted["panel_text"])

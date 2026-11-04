@@ -54,7 +54,12 @@ class ApiClient {
   Future<dynamic> patch(String path, Object? body) => _send('PATCH', path, body: body);
   Future<dynamic> delete(String path, [Object? body]) => _send('DELETE', path, body: body);
 
-  Future<dynamic> _send(String method, String path, {Object? body, Map<String, String>? query}) async {
+  /// POST with a longer timeout, for AI calls that can take a while to answer.
+  Future<dynamic> postSlow(String path, Object? body) =>
+      _send('POST', path, body: body, timeout: const Duration(seconds: 60));
+
+  Future<dynamic> _send(String method, String path,
+      {Object? body, Map<String, String>? query, Duration timeout = const Duration(seconds: 25)}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
     final req = http.Request(method, uri);
     if (_token != null) req.headers['Authorization'] = 'Bearer $_token';
@@ -62,9 +67,22 @@ class ApiClient {
       req.headers['Content-Type'] = 'application/json';
       req.body = jsonEncode(body);
     }
+    return _handle(req, timeout);
+  }
+
+  /// Multipart upload of one image plus form fields (used by AI photo reading).
+  Future<dynamic> upload(String path, {required Map<String, String> fields, required List<int> bytes, String filename = 'photo.jpg'}) {
+    final req = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'));
+    if (_token != null) req.headers['Authorization'] = 'Bearer $_token';
+    req.fields.addAll(fields);
+    req.files.add(http.MultipartFile.fromBytes('image', bytes, filename: filename));
+    return _handle(req, const Duration(seconds: 60));
+  }
+
+  Future<dynamic> _handle(http.BaseRequest req, Duration timeout) async {
     http.Response res;
     try {
-      res = await http.Response.fromStream(await _http.send(req).timeout(const Duration(seconds: 25)));
+      res = await http.Response.fromStream(await _http.send(req).timeout(timeout));
     } catch (_) {
       throw ApiException(0, "Can't reach Food omniScan. Check your connection.", code: 'network_error');
     }

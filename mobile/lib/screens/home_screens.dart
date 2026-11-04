@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/score_widgets.dart';
+import 'assistant_screen.dart';
 import 'product_screen.dart';
 
 class ProductTile extends StatelessWidget {
@@ -87,6 +88,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
                 FilledButton.tonalIcon(onPressed: widget.onScan, icon: const Icon(Icons.qr_code_scanner), label: const Text('Scan a product')),
               ]),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
+              title: const Text('Ask the nutrition assistant', style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text('Ingredients, nutrients, healthier swaps'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantScreen())),
             ),
           ),
           const SizedBox(height: 16),

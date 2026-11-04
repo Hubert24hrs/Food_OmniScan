@@ -7,10 +7,10 @@
 | Barcode scanning | ZXing (web), ML Kit / `mobile_scanner` (mobile), on-device | No |
 | Ingredient & nutrition label OCR | Tesseract.js (web) / ML Kit Text Recognition (mobile), on-device | No |
 | Ingredient parsing, matching, allergens, scoring, compatibility | Deterministic Python (`backend/app/services`) | **No** |
-| Cloud label extraction (hard photos) | Gemini vision, `POST /analysis/image` (`ingredients` / `nutrition`) | Yes, quota |
+| Cloud label extraction (hard photos) | Gemini vision, `POST /analysis/image` (`ingredients` / `nutrition`). Mobile: "Read with AI" on the label screen | Yes, quota |
 | Front-of-pack product identification | Gemini vision, `task=front` | Yes, quota |
 | Meal photo recognition (incl. Nigerian/African dishes) | Gemini vision, `task=meal` | Yes, quota; outputs marked *estimate* |
-| Nutrition assistant | Gemini text, `POST /assistant/ask`, grounded | Yes, quota |
+| Nutrition assistant | Gemini text, `POST /assistant/ask`, grounded. Web `/assistant`; mobile Home card and "Ask AI" on product pages | Yes, quota |
 
 **The scoring engine never calls an LLM.** Scores are reproducible and auditable.
 
@@ -44,7 +44,11 @@ no embedding index is needed yet. When the research library grows, add `pgvector
 
 ## Vision extraction rules
 Prompts ask for **verbatim transcription** in JSON (`responseMimeType: application/json`, temperature 0).
-Extracted text then goes through the same deterministic parser and scorer as on-device OCR. Users review and
+Extracted text then goes through the same deterministic parser and scorer as on-device OCR.
+Vision output often drops the "Contains:" / "May contain" prefix (returning just `WHEAT.`), so
+`ingredients_with_statements` re-labels each statement before parsing. Without that, a precautionary
+statement could be lost or read as an ingredient. The endpoint returns this labelled `ingredients_text`, and the
+mobile app puts it in the review box as-is. Users review and
 correct it before submitting a product, and submissions still need moderator approval. AI output never writes
 product data directly.
 
