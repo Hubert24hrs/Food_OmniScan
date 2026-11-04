@@ -104,6 +104,24 @@ def _diff_reasons(base: dict, alt: dict) -> dict:
     return {"better": better, "not_better": worse, "ingredients_removed": removed, "ingredients_added": added}
 
 
+_COUNTRY_TAGS = {
+    "US": "en:united-states",
+    "GB": "en:united-kingdom",
+    "NG": "en:nigeria",
+    "FR": "en:france",
+    "DE": "en:germany",
+    "GH": "en:ghana",
+    "KE": "en:kenya",
+    "ZA": "en:south-africa",
+    "CA": "en:canada",
+}
+
+
+def country_tag(country: str) -> str:
+    """Open Food Facts country tag for an ISO code (e.g. NG -> en:nigeria)."""
+    return _COUNTRY_TAGS.get(country.upper(), f"en:{country.lower()}")
+
+
 def _candidates(db: Session, product: Product, limit: int) -> list[Product]:
     tags = list(product.categories_tags or [])
     found: dict[str, Product] = {}
@@ -143,6 +161,7 @@ def find_alternatives(
     brand: str | None = None,
     compatible_only: bool = True,
     limit: int = 10,
+    country: str | None = None,
 ) -> dict:
     base = _metrics(db, product, profiles)
     exclude = {e.strip().lower() for e in (exclude_ingredients or []) if e.strip()}
@@ -169,12 +188,16 @@ def find_alternatives(
             continue
         if brand and (m["product"]["brand"] or "").lower() != brand.lower():
             continue
+        m["sold_in_country"] = bool(country) and country_tag(country) in (cand.countries_tags or [])
         m["reasons"] = _diff_reasons(base, m)
         m["score_delta"] = (m["score"] - base["score"]) if base["score"] is not None else None
         results.append(m)
 
     key, direction, label = OBJECTIVES.get(objective, OBJECTIVES["overall"])
     results.sort(key=lambda r: r.get(key) if r.get(key) is not None else 0, reverse=direction == "desc")
+    if country:
+        # Products sold where the user shops come first; the objective order is kept within each group.
+        results.sort(key=lambda r: not r["sold_in_country"])
     results = results[:limit]
     version = ps.active_methodology(db)["version"]
     for r in results:
@@ -205,7 +228,9 @@ def find_alternatives(
         "objective": objective,
         "objective_label": label,
         "alternatives": results,
-        "price_comparison": "Price data isn't available yet; no reliable retailer pricing source is connected.",
+        "country": country,
+        "price_comparison": "Shelf prices reported by users are shown on each product page (Plus). "
+        "No retailer price feed is connected.",
     }
 
 

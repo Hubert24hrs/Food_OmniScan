@@ -287,6 +287,7 @@ def alternatives(
     brand: str | None = None,
     compatible_only: bool = True,
     profile_ids: list[str] | None = Query(default=None),
+    country: str | None = Query(default=None, pattern="^[A-Za-z]{2}$"),
 ):
     p = _get_product(db, product_id)
     if user:
@@ -299,6 +300,7 @@ def alternatives(
         exclude_ingredients=exclude,
         brand=brand,
         compatible_only=compatible_only,
+        country=(country or (user.country if user else None) or None),
     )
     if user:
         ent.record_usage(db, user, "alternatives", "internal", None)

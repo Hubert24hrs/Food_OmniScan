@@ -8,6 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Default targets a local API from the Android emulator (10.0.2.2 = host machine).
 const apiUrl = String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:8010/api/v1');
 
+/// Web app base URL, used for shareable report links (e.g. --dart-define=WEB_URL=https://app.example.com).
+const webUrl = String.fromEnvironment('WEB_URL', defaultValue: 'http://10.0.2.2:3000');
+
 class ApiException implements Exception {
   ApiException(this.status, this.message, {this.code, this.detail});
   final int status;
@@ -16,6 +19,12 @@ class ApiException implements Exception {
   final Object? detail;
 
   bool get isNetwork => status == 0;
+
+  /// The feature needs a paid plan, or this month's allowance is used up.
+  bool get isPlan => code == 'upgrade_required' || code == 'quota_exceeded' || code == 'plan_limit';
+
+  /// Cheapest plan that includes the feature, when the API says so.
+  String? get requiredTier => detail is Map ? (detail as Map)['required_tier'] as String? : null;
 
   @override
   String toString() => message;

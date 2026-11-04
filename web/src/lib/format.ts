@@ -6,7 +6,7 @@ export const nf = (v: number | null | undefined, digits = 1) =>
     : new Intl.NumberFormat("en-US", { maximumFractionDigits: digits }).format(v);
 
 export const money = (v: number, currency = "USD", locale = "en-US") =>
-  new Intl.NumberFormat(locale, { style: "currency", currency }).format(v);
+  new Intl.NumberFormat(locale, { style: "currency", currency, currencyDisplay: "narrowSymbol" }).format(v);
 
 export const gToOz = (g: number) => g / 28.3495;
 export const mlToFlOz = (ml: number) => ml / 29.5735;

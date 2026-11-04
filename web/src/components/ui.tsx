@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Inbox, Loader2 } from "lucide-react";
+import { AlertTriangle, Inbox, Loader2, Lock } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -75,7 +75,31 @@ export function EmptyState({ title, body, action, icon }: { title: string; body?
   );
 }
 
+type PlanDetail = { code?: string; required_tier?: string | null; message?: string };
+
+/** True when the API says the feature needs a paid plan or the monthly allowance is used up. */
+export function isPlanError(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  return code === "upgrade_required" || code === "quota_exceeded" || code === "plan_limit";
+}
+
+export function UpgradeCard({ error, title }: { error?: unknown; title?: string }) {
+  const d = ((error as { detail?: PlanDetail })?.detail || {}) as PlanDetail;
+  const tier = d.required_tier;
+  return (
+    <div role="status" className="flex items-start gap-3 rounded-2xl border border-brand/30 bg-brand-soft p-4 text-sm">
+      <Lock className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
+      <div className="flex-1">
+        <p className="font-semibold">{title || (tier ? `Included with ${tier[0].toUpperCase() + tier.slice(1)}` : "Plan limit reached")}</p>
+        <p className="mt-0.5 text-muted">{(error as Error)?.message || d.message}</p>
+      </div>
+      <Link href="/subscription" className="rounded-lg px-3 py-1 font-semibold text-brand underline">See plans</Link>
+    </div>
+  );
+}
+
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  if (isPlanError(error)) return <UpgradeCard error={error} />;
   const msg = error instanceof Error ? error.message : String(error);
   return (
     <div role="alert" className="flex items-start gap-3 rounded-2xl border border-bad/30 bg-bad-soft p-4 text-sm text-bad">

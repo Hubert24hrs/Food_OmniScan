@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminAnalytics, AdminArticles } from "@/components/AdminContent";
 import { useState } from "react";
 import { api, assetUrl } from "@/lib/api";
 import { dateTime } from "@/lib/format";
@@ -13,7 +14,7 @@ type Method = { version: string; name: string; is_active: boolean; notes: string
 type Log = { id: string; action: string; entity: string; entity_id: string; note: string | null; created_at: string; actor_id: string };
 type U = { id: string; email: string; role: string; is_active: boolean; country: string; created_at: string };
 
-const TABS = ["Overview", "Submissions", "Scoring", "Recalls", "Users", "Audit log"] as const;
+const TABS = ["Overview", "Analytics", "Submissions", "Scoring", "Recalls", "Articles", "Users", "Audit log"] as const;
 
 export default function AdminPage() {
   const { me } = useRequireAuth();
@@ -29,6 +30,8 @@ export default function AdminPage() {
         ))}
       </div>
       {tab === "Overview" && <Overview />}
+      {tab === "Analytics" && <AdminAnalytics />}
+      {tab === "Articles" && <AdminArticles />}
       {tab === "Submissions" && <Submissions />}
       {tab === "Scoring" && <Scoring />}
       {tab === "Recalls" && <Recalls />}

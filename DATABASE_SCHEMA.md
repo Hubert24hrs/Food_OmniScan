@@ -106,6 +106,48 @@ Regenerate with `python scripts/gen_docs.py` from `backend/`.
 
 Unique: (profile_id, allergen_code)
 
+### `articles`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `slug` | VARCHAR(120) | no | unique, indexed |
+| `title` | VARCHAR(200) | no |  |
+| `summary` | VARCHAR(500) | no |  |
+| `body` | TEXT | no |  |
+| `topic` | VARCHAR(30) | no | indexed |
+| `region` | VARCHAR(8) | yes |  |
+| `source_keys` | JSON | no |  |
+| `status` | VARCHAR(10) | no | indexed |
+| `published_at` | DATETIME | yes |  |
+| `author_id` | VARCHAR(36) | yes |  |
+| `id` | VARCHAR(36) | no | PK |
+| `created_at` | DATETIME | no |  |
+| `updated_at` | DATETIME | no |  |
+
+### `body_metrics`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `user_id` | VARCHAR(36) | no | FK → `users.id` (CASCADE), indexed |
+| `profile_id` | VARCHAR(36) | no | FK → `family_profiles.id` (CASCADE), indexed |
+| `day` | DATE | no |  |
+| `weight_kg` | FLOAT | no |  |
+| `id` | VARCHAR(36) | no | PK |
+
+Unique: (profile_id, day)
+
+### `budgets`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `user_id` | VARCHAR(36) | yes | FK → `users.id` (CASCADE), unique |
+| `household_id` | VARCHAR(36) | yes | FK → `households.id` (CASCADE), unique |
+| `monthly_amount` | FLOAT | no |  |
+| `currency` | VARCHAR(3) | no |  |
+| `id` | VARCHAR(36) | no | PK |
+| `created_at` | DATETIME | no |  |
+| `updated_at` | DATETIME | no |  |
+
 ### `community_submissions`
 
 | Column | Type | Null | Key / constraint |
@@ -232,6 +274,30 @@ Unique: (profile_id, day)
 
 Unique: (user_id, client_id)
 
+### `household_members`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `household_id` | VARCHAR(36) | no | FK → `households.id` (CASCADE), indexed |
+| `user_id` | VARCHAR(36) | yes | FK → `users.id` (CASCADE), indexed |
+| `invited_email` | VARCHAR(320) | no |  |
+| `role` | VARCHAR(10) | no |  |
+| `status` | VARCHAR(10) | no |  |
+| `created_at` | DATETIME | no |  |
+| `id` | VARCHAR(36) | no | PK |
+
+Unique: (household_id, invited_email)
+
+### `households`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `name` | VARCHAR(80) | no |  |
+| `owner_user_id` | VARCHAR(36) | no | FK → `users.id` (CASCADE), indexed |
+| `id` | VARCHAR(36) | no | PK |
+| `created_at` | DATETIME | no |  |
+| `updated_at` | DATETIME | no |  |
+
 ### `ingredient_avoidance_rules`
 
 | Column | Type | Null | Key / constraint |
@@ -338,6 +404,7 @@ Unique: (term, language)
 | `fiber` | FLOAT | yes |  |
 | `sugars` | FLOAT | yes |  |
 | `sodium` | FLOAT | yes |  |
+| `micros` | JSON | yes |  |
 | `source` | VARCHAR(20) | no |  |
 | `is_estimate` | BOOLEAN | no |  |
 | `created_at` | DATETIME | no |  |
@@ -399,6 +466,24 @@ Unique: (term, language)
 
 Unique: (product_id, basis)
 
+### `pantry_items`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `owner_user_id` | VARCHAR(36) | no | FK → `users.id` (CASCADE), indexed |
+| `household_id` | VARCHAR(36) | yes | FK → `households.id` (SET NULL), indexed |
+| `product_id` | VARCHAR(36) | yes | FK → `products.id` (SET NULL) |
+| `name` | VARCHAR(200) | no |  |
+| `quantity` | VARCHAR(40) | yes |  |
+| `location` | VARCHAR(20) | no |  |
+| `expires_on` | DATE | yes | indexed |
+| `opened_on` | DATE | yes |  |
+| `reminded_at` | DATETIME | yes |  |
+| `used_up_at` | DATETIME | yes |  |
+| `id` | VARCHAR(36) | no | PK |
+| `created_at` | DATETIME | no |  |
+| `updated_at` | DATETIME | no |  |
+
 ### `payment_events`
 
 | Column | Type | Null | Key / constraint |
@@ -411,6 +496,21 @@ Unique: (product_id, basis)
 | `id` | VARCHAR(36) | no | PK |
 
 Unique: (provider, event_id)
+
+### `price_observations`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `product_id` | VARCHAR(36) | no | FK → `products.id` (CASCADE), indexed |
+| `user_id` | VARCHAR(36) | yes | FK → `users.id` (SET NULL) |
+| `price` | FLOAT | no |  |
+| `currency` | VARCHAR(3) | no |  |
+| `store` | VARCHAR(120) | no |  |
+| `city` | VARCHAR(80) | yes |  |
+| `country` | VARCHAR(2) | no | indexed |
+| `observed_on` | DATE | no |  |
+| `created_at` | DATETIME | no |  |
+| `id` | VARCHAR(36) | no | PK |
 
 ### `product_alternatives`
 
@@ -582,17 +682,40 @@ Unique: (product_id, methodology_version, inputs_hash)
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
+### `purchases`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `user_id` | VARCHAR(36) | no | FK → `users.id` (CASCADE), indexed |
+| `household_id` | VARCHAR(36) | yes | FK → `households.id` (SET NULL), indexed |
+| `product_id` | VARCHAR(36) | yes | FK → `products.id` (SET NULL), indexed |
+| `name` | VARCHAR(200) | no |  |
+| `quantity` | VARCHAR(40) | yes |  |
+| `price` | FLOAT | no |  |
+| `currency` | VARCHAR(3) | no |  |
+| `store` | VARCHAR(120) | yes |  |
+| `purchased_on` | DATE | no | indexed |
+| `created_at` | DATETIME | no |  |
+| `id` | VARCHAR(36) | no | PK |
+
 ### `recipes`
 
 | Column | Type | Null | Key / constraint |
 |---|---|---|---|
 | `title` | VARCHAR(200) | no | indexed |
+| `description` | TEXT | yes |  |
 | `cuisine` | VARCHAR(60) | yes |  |
 | `region` | VARCHAR(8) | yes |  |
 | `ingredients` | JSON | no |  |
 | `steps` | JSON | no |  |
 | `nutrition` | JSON | yes |  |
 | `nutrition_is_estimate` | BOOLEAN | no |  |
+| `servings` | INTEGER | no |  |
+| `time_minutes` | INTEGER | yes |  |
+| `tags` | JSON | no |  |
+| `diet_tags` | JSON | no |  |
+| `preparation_notes` | TEXT | yes |  |
+| `is_public` | BOOLEAN | no |  |
 | `source` | VARCHAR(300) | yes |  |
 | `verified` | BOOLEAN | no |  |
 | `created_by` | VARCHAR(36) | yes |  |
@@ -661,6 +784,16 @@ Unique: (user_id, product_id)
 | `description` | TEXT | yes |  |
 | `id` | VARCHAR(36) | no | PK |
 
+### `shared_reports`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `token` | VARCHAR(40) | no | unique, indexed |
+| `product_id` | VARCHAR(36) | no | FK → `products.id` (CASCADE) |
+| `created_by` | VARCHAR(36) | yes | FK → `users.id` (SET NULL) |
+| `created_at` | DATETIME | no |  |
+| `id` | VARCHAR(36) | no | PK |
+
 ### `shopping_list_items`
 
 | Column | Type | Null | Key / constraint |
@@ -681,6 +814,7 @@ Unique: (user_id, product_id)
 | `owner_user_id` | VARCHAR(36) | no | FK → `users.id` (CASCADE), indexed |
 | `name` | VARCHAR(120) | no |  |
 | `shared_with_family` | BOOLEAN | no |  |
+| `household_id` | VARCHAR(36) | yes | FK → `households.id` (SET NULL), indexed |
 | `id` | VARCHAR(36) | no | PK |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
@@ -761,6 +895,17 @@ Unique: (user_id, product_id)
 | `id` | VARCHAR(36) | no | PK |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
+
+### `water_logs`
+
+| Column | Type | Null | Key / constraint |
+|---|---|---|---|
+| `user_id` | VARCHAR(36) | no | FK → `users.id` (CASCADE), indexed |
+| `profile_id` | VARCHAR(36) | no | FK → `family_profiles.id` (CASCADE), indexed |
+| `day` | DATE | no | indexed |
+| `ml` | INTEGER | no |  |
+| `created_at` | DATETIME | no |  |
+| `id` | VARCHAR(36) | no | PK |
 
 
 <!-- END GENERATED -->

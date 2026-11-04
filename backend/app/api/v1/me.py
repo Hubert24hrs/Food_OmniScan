@@ -43,6 +43,11 @@ def user_out(db, user) -> dict:
         "marketing_opt_in": user.marketing_opt_in,
         "active_profile_id": user.settings.active_family_profile_id if user.settings else None,
         "units": user.settings.units if user.settings else "us",
+        "notification_prefs": {
+            "weekly_report": True,
+            "tips": False,
+            **((user.settings.notification_prefs if user.settings else None) or {}),
+        },
         "tier": ent.active_tier(db, user),
         "created_at": user.created_at.isoformat(),
     }
@@ -62,6 +67,7 @@ class MePatch(BaseModel):
     consent_health_data: bool | None = None
     consent_ai_history: bool | None = None
     marketing_opt_in: bool | None = None
+    notification_prefs: dict[str, bool] | None = None
 
 
 @router.patch("")
@@ -76,6 +82,10 @@ def patch_me(body: MePatch, user: CurrentUser, db: DB):
         user.currency = data["currency"].upper()
     if "units" in data and user.settings:
         user.settings.units = data["units"]
+    if data.get("notification_prefs") is not None and user.settings:
+        allowed = {"weekly_report", "tips", "recalls", "allergen_alerts", "ingredient_alerts", "expiry"}
+        prefs = {k: v for k, v in data["notification_prefs"].items() if k in allowed}
+        user.settings.notification_prefs = {**(user.settings.notification_prefs or {}), **prefs}
     if "consent_health_data" in data:
         if data["consent_health_data"]:
             user.consent_health_data_at = user.consent_health_data_at or datetime.now(UTC)

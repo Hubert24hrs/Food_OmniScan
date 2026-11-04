@@ -57,6 +57,8 @@ docker compose up --build               # API :8000 (runs alembic upgrade head),
    - Paystack → `.../billing/webhooks/paystack` (metadata `user_id`, `tier`).
 5. Set a descriptive `OFF_USER_AGENT` with a contact address for your organisation (required by Open Food Facts).
 6. Put a WAF or rate limiter in front (Cloud Armor), since the in-process limiter is per instance.
+7. Schedule the daily job once a day (Cloud Scheduler → Cloud Run job): `python -m app.services.alerts`.
+   It sends pantry expiry reminders every day, and weekly nutrition reports and tips on Mondays.
 
 ### Backups & recovery
 - Cloud SQL automated backups + point-in-time recovery. Test a restore into a staging instance quarterly.

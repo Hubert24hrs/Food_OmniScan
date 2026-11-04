@@ -95,7 +95,7 @@ export interface Product {
   nova_group: number | null;
   nova_source: string | null;
   is_beverage: boolean;
-  nutrition: null | { basis: string; per_100: Nutrients; serving_size_g: number | null; per_serving: Nutrients | null; source: string };
+  nutrition: null | { basis: string; per_100: Nutrients; serving_size_g: number | null; per_serving: Nutrients | null; source: string; micros_per_100?: { key: string; label: string; unit: string; amount: number; pct_dv: number }[] };
   provenance: { source: string; source_url: string | null; license: string | null; attribution: string | null; fields: Record<string, string>; last_synced_at: string | null; verified_at: string | null };
   completeness: number;
 }
@@ -128,6 +128,7 @@ export interface Me {
   active_profile_id: string | null;
   units: string;
   tier: "free" | "plus" | "premium" | "family";
+  notification_prefs?: Record<string, boolean>;
 }
 
 export interface Profile {

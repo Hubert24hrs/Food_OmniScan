@@ -8,8 +8,15 @@ import { money } from "@/lib/format";
 import { useApi } from "@/lib/useApi";
 import { Badge, Button, Card, ErrorBox, Page } from "@/components/ui";
 
-type Plan = { tier: string; monthly_usd: number; annual_usd: number | null; features: string[] };
-type Usage = { tier: string; features: Record<string, { limit: number | null; used: number | null }> };
+type Plan = { tier: string; monthly_usd: number; annual_usd: number | null; features: string[]; limits: Record<string, number | null>; feature_labels: Record<string, string> };
+type Usage = { tier: string; features: Record<string, { kind: string; label: string; limit: number | null; included: boolean; used: number | null }> };
+const METERED = new Set(["ai_assistant", "ai_vision", "ai_recipes", "ai_meal_plans", "alternatives", "comparisons"]);
+
+function cell(feature: string, v: number | null | undefined) {
+  if (v === 0) return <span className="text-muted">—</span>;
+  if (v === null || v === undefined) return METERED.has(feature) ? "Unlimited" : <Check className="mx-auto size-4 text-good" aria-label="Included" />;
+  return METERED.has(feature) ? `${v}/mo` : `${v}`;
+}
 
 export default function SubscriptionPage() {
   const { me } = useAuth();
@@ -33,7 +40,7 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <Page title="Plans" subtitle="Scanning, scores and allergen alerts are free forever. Upgrade for AI, family profiles and more.">
+    <Page title="Plans" subtitle="Scanning, scores, allergen alerts and food-safety information are free forever. Upgrade for AI, tracking, planning and family features.">
       <div className="mb-4 inline-flex rounded-2xl border border-line bg-surface p-1">
         {(["month", "year"] as const).map((i) => (
           <button key={i} onClick={() => setBilling(i)} aria-pressed={interval === i} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${interval === i ? "bg-brand text-white dark:text-[#06201d]" : "text-muted"}`}>
@@ -66,14 +73,28 @@ export default function SubscriptionPage() {
           );
         })}
       </div>
+      {plans.data && plans.data[0]?.feature_labels && (
+        <Card className="mt-6 overflow-x-auto">
+          <p className="mb-2 font-display font-bold">Compare plans</p>
+          <table className="w-full min-w-[36rem] text-sm">
+            <thead><tr className="text-left text-xs text-muted"><th className="py-2">Feature</th>{plans.data.map((p) => <th key={p.tier} className="px-2 text-center capitalize">{p.tier}</th>)}</tr></thead>
+            <tbody>
+              <tr className="border-t border-line"><td className="py-2">Scans, scores, allergen alerts, recalls, food-safety research</td>{plans.data.map((p) => <td key={p.tier} className="text-center"><Check className="mx-auto size-4 text-good" aria-label="Included" /></td>)}</tr>
+              {Object.entries(plans.data[0].feature_labels).map(([f, label]) => (
+                <tr key={f} className="border-t border-line"><td className="py-2">{label}</td>{plans.data!.map((p) => <td key={p.tier} className="px-2 text-center tabular-nums">{cell(f, p.limits[f])}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
       {usage.data && (
         <Card className="mt-6">
           <p className="font-display font-bold">This month&apos;s usage</p>
           <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-            {Object.entries(usage.data.features).map(([k, v]) => (
+            {Object.entries(usage.data.features).filter(([, v]) => v.kind !== "access").map(([k, v]) => (
               <li key={k} className="flex justify-between gap-3 rounded-lg bg-surface-2 px-3 py-1.5">
-                <span className="capitalize">{k.replace(/_/g, " ")}</span>
-                <span className="tabular-nums">{v.used !== null ? `${v.used} / ` : ""}{v.limit === null ? "Unlimited" : v.limit}</span>
+                <span>{v.label}</span>
+                <span className="tabular-nums">{!v.included ? "Not included" : `${v.used !== null ? `${v.used} / ` : ""}${v.limit === null ? "Unlimited" : v.limit}`}</span>
               </li>
             ))}
           </ul>

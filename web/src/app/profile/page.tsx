@@ -76,6 +76,18 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      <Card className="mb-4" id="notifications">
+        <SectionTitle>Notifications</SectionTitle>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([["allergen_alerts", "Allergen alerts when I scan", true], ["recalls", "Recalls for products I've scanned", true], ["ingredient_alerts", "Watchlist ingredient alerts (Plus)", true], ["expiry", "Pantry expiry reminders (Plus)", true], ["weekly_report", "Weekly nutrition summary (Plus)", true], ["tips", "A weekly food tip", false]] as const).map(([k, label, def]) => (
+            <label key={k} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={me.notification_prefs?.[k] ?? def} onChange={async (e) => { await api("/me", { method: "PATCH", body: { notification_prefs: { [k]: e.target.checked } } }); refresh(); }} />
+              {label}
+            </label>
+          ))}
+        </div>
+      </Card>
+
       <Card className="mb-4" id="submissions">
         <SectionTitle>My product submissions</SectionTitle>
         {subs.data?.length ? (

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/analysis_view.dart';
+import '../widgets/common.dart';
 import 'assistant_screen.dart';
 
 /// Loads a product by barcode (scan flow) or id, with an offline cached fallback.
@@ -50,6 +52,51 @@ class _ProductScreenState extends State<ProductScreen> {
       if (e.isNetwork && widget.barcode != null) await app.queueScan(widget.barcode!);
       if (mounted) setState(() => error = e);
     }
+  }
+
+  Future<void> _share(String productId) async {
+    final r = await runAction(context, () => context.read<AppState>().api.post('/products/$productId/share'));
+    if (r is! Map || !mounted) return;
+    final url = '$webUrl${r['path']}';
+    await Clipboard.setData(ClipboardData(text: url));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Report link copied: $url')));
+  }
+
+  Future<void> _log(String productId) async {
+    final servings = TextEditingController(text: '1');
+    var meal = 'snack';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, set) => AlertDialog(
+          title: const Text('Log this product'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(controller: servings, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Servings')),
+            DropdownButtonFormField<String>(
+              initialValue: meal,
+              items: [for (final m in ['breakfast', 'lunch', 'dinner', 'snack']) DropdownMenuItem(value: m, child: Text(m))],
+              onChanged: (v) => set(() => meal = v ?? 'snack'),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Log')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final app = context.read<AppState>();
+    await runAction(
+      context,
+      () => app.api.post('/diary/entries', {
+        'product_id': productId,
+        'servings': double.tryParse(servings.text) ?? 1,
+        'meal_type': meal,
+        'profile_id': app.activeProfile?['id'],
+      }),
+      ok: 'Logged in your diary',
+    );
   }
 
   @override
@@ -127,6 +174,16 @@ class _ProductScreenState extends State<ProductScreen> {
               icon: const Icon(Icons.auto_awesome),
               label: const Text('Ask AI'),
             ),
+          if (!offlineCopy)
+            OutlinedButton.icon(onPressed: () => _share(p['id'] as String), icon: const Icon(Icons.share_outlined), label: const Text('Share')),
+          if (!offlineCopy && context.read<AppState>().signedIn) ...[
+            OutlinedButton.icon(onPressed: () => _log(p['id'] as String), icon: const Icon(Icons.restaurant), label: const Text('Log it')),
+            OutlinedButton.icon(
+              onPressed: () => runAction(context, () => context.read<AppState>().api.post('/pantry', {'product_id': p['id']}), ok: 'Added to your pantry'),
+              icon: const Icon(Icons.kitchen_outlined),
+              label: const Text('Pantry'),
+            ),
+          ],
         ]),
         const SizedBox(height: 12),
         AnalysisView(analysis: data!['analysis'] as Map<String, dynamic>),

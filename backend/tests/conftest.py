@@ -29,6 +29,9 @@ get_settings.cache_clear()
 from app.core.ratelimit import limiter  # noqa: E402
 from app.db.session import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
+from app.services.ai import provider as _ai_provider  # noqa: E402
+
+_ai_provider.RETRY_BACKOFF_S = 0  # no real sleeps when tests exercise retries
 
 OFF = "https://world.openfoodfacts.org"
 

@@ -1,5 +1,6 @@
 """Recipes, AI recipe generation, meal plans and recipe-to-shopping-list conversion."""
 
+import re
 from datetime import date
 
 from fastapi import APIRouter, HTTPException, Query
@@ -320,6 +321,20 @@ def recipe_to_list(recipe_id: str, body: ToListIn, db: DB, user: CurrentUser):
 # ------------------------------------------------------------------ meal plans
 
 
+def match_recipe(recipes: list[Recipe], meal_title: str) -> str | None:
+    """Link a planned meal to a recipe whose dish name appears in the meal title ("Akara and pap" -> Akara).
+
+    Longest dish name wins, so "Fish pepper soup" beats a shorter match.
+    """
+    t = f" {re.sub(r'[^a-z ]', ' ', meal_title.lower())} "
+    best: tuple[int, str] | None = None
+    for r in recipes:
+        name = re.sub(r"[^a-z ]", " ", r.title.lower().split("(")[0]).strip()
+        if name and f" {name} " in t and (best is None or len(name) > best[0]):
+            best = (len(name), r.id)
+    return best[1] if best else None
+
+
 def plan_out(db, mp: MealPlan) -> dict:
     return {
         "id": mp.id,
@@ -428,7 +443,7 @@ def generate_plan(body: GeneratePlanIn, db: DB, user: CurrentUser):
         preferences=body.preferences,
     )
     data = _run_ai(db, user, "ai_meal_plans", lambda p: ai.generate_meal_plan(p, body.days, constraints))
-    titles = {r.title.lower(): r.id for r in db.scalars(select(Recipe).where(Recipe.is_public.is_(True))).all()}
+    public = db.scalars(select(Recipe).where(Recipe.is_public.is_(True))).all()
     days = []
     for d in (data.get("days") or [])[: body.days]:
         meals = []
@@ -443,7 +458,7 @@ def generate_plan(body: GeneratePlanIn, db: DB, user: CurrentUser):
                     "title": title,
                     "description": (str(m.get("description") or "")[:500] or None),
                     "estimated_kcal": kcal if isinstance(kcal, int | float) else None,
-                    "recipe_id": titles.get(title.lower()),
+                    "recipe_id": match_recipe(public, title),
                 }
             )
         days.append({"day": len(days) + 1, "meals": meals})

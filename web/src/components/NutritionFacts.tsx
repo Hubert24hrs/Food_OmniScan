@@ -73,6 +73,15 @@ export function NutritionFacts({ product }: { product: Product }) {
           <span className="font-extrabold">{pct("added_sugars", v.added_sugars) === null ? "" : `${pct("added_sugars", v.added_sugars)}%`}</span>
         </div>
         <div className="border-b-8 border-black dark:border-white">{row("Protein", v.protein, "g")}</div>
+        {(n.micros_per_100 || []).map((m) => {
+          const f = mode === "serving" && serving ? serving / 100 : 1;
+          return (
+            <div key={m.key} className="flex justify-between border-b border-black/30 py-0.5 dark:border-white/30">
+              <span>{m.label} {nf(m.amount * f, 1)}{m.unit}</span>
+              <span>{Math.round(m.pct_dv * f)}%</span>
+            </div>
+          );
+        })}
         <p className="pt-1 text-[10px] leading-snug">
           * The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
         </p>

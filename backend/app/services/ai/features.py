@@ -156,12 +156,16 @@ def constraints_text(profile: dict | None, extra: dict) -> str:
 
 def generate_recipe(provider: AIProvider, request: str, constraints: str) -> AIResult:
     msg = f"CONSTRAINTS (JSON):\n{constraints}\n\nREQUEST:\n{request[:1000]}"
-    return provider.generate(RECIPE_SYSTEM, [{"role": "user", "content": msg}], json_mode=True, temperature=0.6)
+    return provider.generate(
+        RECIPE_SYSTEM, [{"role": "user", "content": msg}], json_mode=True, temperature=0.6, max_tokens=4096
+    )
 
 
 def generate_meal_plan(provider: AIProvider, days: int, constraints: str) -> AIResult:
     msg = f"CONSTRAINTS (JSON):\n{constraints}\n\nPlan {days} days of breakfast, lunch, dinner and one snack."
-    return provider.generate(MEAL_PLAN_SYSTEM, [{"role": "user", "content": msg}], json_mode=True, temperature=0.6)
+    return provider.generate(
+        MEAL_PLAN_SYSTEM, [{"role": "user", "content": msg}], json_mode=True, temperature=0.6, max_tokens=8192
+    )
 
 
 def estimate_recipe_nutrition(provider: AIProvider, recipe: dict) -> AIResult:

@@ -5,6 +5,7 @@ import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/score_widgets.dart';
 import 'assistant_screen.dart';
+import 'explore_screens.dart';
 import 'product_screen.dart';
 
 class ProductTile extends StatelessWidget {
@@ -98,6 +99,15 @@ class _HomeScreenState extends State<HomeScreen> {
               subtitle: const Text('Ingredients, nutrients, healthier swaps'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantScreen())),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.explore_outlined, color: Theme.of(context).colorScheme.primary),
+              title: const Text('Explore', style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text('Recipes, meal plans, pantry, rankings, Nigerian foods, food safety'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExploreScreen())),
             ),
           ),
           const SizedBox(height: 16),

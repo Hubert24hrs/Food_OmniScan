@@ -16,6 +16,7 @@ function Assistant() {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [language, setLanguage] = useState("en");
 
   const ask = async (question: string) => {
     if (!question.trim()) return;
@@ -26,7 +27,7 @@ function Assistant() {
     setQ("");
     try {
       const r = await api<{ answer: string; sources: Msg["sources"]; disclaimer: string }>("/assistant/ask", {
-        body: { question, product_ids: productId ? [productId] : [], history, profile_id: activeProfile?.id },
+        body: { question, product_ids: productId ? [productId] : [], history, profile_id: activeProfile?.id, language },
       });
       setMsgs((m) => [...m, { role: "assistant", content: r.answer, sources: r.sources }]);
     } catch (e) {
@@ -71,6 +72,12 @@ function Assistant() {
         <input className={inputCls} placeholder="Ask about ingredients, nutrients, swaps…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Your question" maxLength={2000} />
         <Button type="submit" loading={busy} aria-label="Send"><Send className="size-4" /></Button>
       </form>
+      <label className="mt-2 flex items-center gap-2 text-xs text-muted">Answer in
+        <select className="rounded-lg border border-line bg-surface px-2 py-1 text-xs text-ink" value={language} onChange={(e) => setLanguage(e.target.value)}>
+          {[["en", "English"], ["pcm", "Pidgin"], ["yo", "Yoruba"], ["ig", "Igbo"], ["ha", "Hausa"], ["fr", "French"], ["es", "Spanish"]].map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
+        {language !== "en" && <span>(Plus)</span>}
+      </label>
       <p className="mt-2 text-xs text-muted">Conversations aren&apos;t stored on our servers. Questions are processed by Google Gemini.</p>
     </Page>
   );

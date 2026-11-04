@@ -14,6 +14,7 @@ import { AnalysisView } from "@/components/AnalysisView";
 import { NutritionFacts } from "@/components/NutritionFacts";
 import { ProductThumb } from "@/components/ProductCard";
 import { Alternatives } from "@/components/Alternatives";
+import { ProductActions, ProductDetails, ProductPrices, ProductReviews } from "@/components/ProductExtras";
 import { Badge, Button, Card, ErrorBox, Page, SectionTitle, Skeleton } from "@/components/ui";
 
 type Resp = { product: Product; analysis: Analysis };
@@ -99,6 +100,7 @@ export default function ProductPage() {
         <Link href={`/assistant?product=${p.id}`} className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-brand">
           <Sparkles className="size-4" aria-hidden /> Ask AI
         </Link>
+        <ProductActions productId={p.id} onMessage={setMsg} />
       </div>
       {msg && <p className="mb-4 rounded-xl bg-surface-2 p-3 text-sm" role="status">{msg}</p>}
 
@@ -122,6 +124,9 @@ export default function ProductPage() {
               <Flag className="size-3.5" /> Report incorrect information
             </Link>
           </Card>
+          <ProductDetails productId={p.id} />
+          <ProductPrices productId={p.id} />
+          <ProductReviews productId={p.id} />
         </aside>
       </div>
 

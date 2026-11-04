@@ -7,6 +7,9 @@ import 'package:food_omniscan/core/app_state.dart';
 import 'package:food_omniscan/core/offline.dart';
 import 'package:food_omniscan/core/theme.dart';
 import 'package:food_omniscan/screens/assistant_screen.dart';
+import 'package:food_omniscan/screens/diary_screen.dart';
+import 'package:food_omniscan/screens/explore_screens.dart';
+import 'package:food_omniscan/widgets/common.dart';
 import 'package:food_omniscan/widgets/analysis_view.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -196,5 +199,53 @@ void main() {
     final app = AppState(api: ApiClient(baseUrl: 'http://api.test/api/v1', client: MockClient((_) async => http.Response('{}', 200))));
     await tester.pumpWidget(ChangeNotifierProvider.value(value: app, child: const MaterialApp(home: AssistantScreen())));
     expect(find.textContaining('Sign in on the Profile tab'), findsOneWidget);
+  });
+
+  testWidgets('plan errors show an upgrade notice naming the plan', (tester) async {
+    final e = ApiException(402, 'Pantry and expiry reminders is included with Plus.', code: 'upgrade_required',
+        detail: {'code': 'upgrade_required', 'required_tier': 'plus'});
+    expect(e.isPlan, isTrue);
+    expect(e.requiredTier, 'plus');
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: errorView(e))));
+    expect(find.text('Included with Plus'), findsOneWidget);
+    expect(find.byType(UpgradeNotice), findsOneWidget);
+  });
+
+  testWidgets('diary shows targets, water and the vitamins upgrade prompt', (tester) async {
+    final api = ApiClient(
+      baseUrl: 'http://api.test/api/v1',
+      client: MockClient((req) async => http.Response(
+          jsonEncode({
+            'day': '2026-11-04',
+            'entries': [
+              {'id': 'e1', 'meal_type': 'lunch', 'description': 'Jollof rice', 'energy_kcal': 450, 'is_estimate': true}
+            ],
+            'totals': {'energy_kcal': 450, 'protein': 10, 'carbohydrates': 80, 'fat': 12, 'fiber': 3, 'sugars': 4, 'sodium_mg': 600,
+                       'includes_estimates': true},
+            'goals': {},
+            'targets': {'energy_kcal': 2000, 'protein': 50, 'carbohydrates': 275, 'fat': 78, 'fiber': 28, 'sodium_mg': 2300, 'water_ml': 2000},
+            'water': {'total_ml': 750, 'logs': []},
+            'micros': null,
+            'micros_locked': true,
+          }),
+          200)),
+    );
+    final app = AppState(api: api)..me = {'id': 'u1'};
+    await tester.pumpWidget(ChangeNotifierProvider.value(value: app, child: const MaterialApp(home: DiaryScreen())));
+    await tester.pumpAndSettle();
+    expect(find.text('750 ml of 2000 ml'), findsOneWidget);
+    expect(find.text('of 2000'), findsOneWidget);
+    expect(find.textContaining('Jollof rice'), findsOneWidget);
+    expect(find.text('lunch · estimate'), findsOneWidget);
+    expect(find.text('Included with Plus'), findsOneWidget);
+  });
+
+  testWidgets('explore lists the new modules', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
+    for (final t in ['Recipes', 'Meal planner', 'Pantry', 'Grocery budget', 'Category rankings', 'Nigerian foods', 'Food safety research', 'Learn']) {
+      expect(find.text(t), findsOneWidget);
+    }
   });
 }

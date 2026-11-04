@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
-import { BookOpen, Home, NotebookPen, ScanLine, Search, Shield, UserRound } from "lucide-react";
+import { Compass, Home, NotebookPen, ScanLine, Search, Shield, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/lib/auth";
 
@@ -35,8 +35,8 @@ function DesktopNav() {
           <n.icon className="size-4" aria-hidden /> {n.label}
         </Link>
       ))}
-      <Link href="/ingredients" className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold ${isActive("/ingredients") ? "bg-surface-2" : "text-muted hover:text-ink"}`}>
-        <BookOpen className="size-4" aria-hidden /> Ingredients
+      <Link href="/explore" className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold ${isActive("/explore") ? "bg-surface-2" : "text-muted hover:text-ink"}`}>
+        <Compass className="size-4" aria-hidden /> Explore
       </Link>
       {me && (me.role === "admin" || me.role === "moderator") && (
         <Link href="/admin" className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted hover:text-ink">

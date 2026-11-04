@@ -24,14 +24,20 @@ def _recent(db: Session, user_id: str, kind: str, key: str, hours: int = 24) -> 
     return any((n.data or {}).get("key") == key for n in rows)
 
 
+def _prefs(user: User) -> dict:
+    return (user.settings.notification_prefs if user.settings else None) or {}
+
+
 def scan_alerts(db: Session, user: User | None, product: Product, analysis: dict) -> int:
     """Create allergen / watchlist notifications for a scan. Returns how many were created."""
     if user is None:
         return 0
-    watchlist = ent.has_feature(db, user, "ingredient_alerts")
+    prefs = _prefs(user)
+    allergen_on = prefs.get("allergen_alerts", True)
+    watchlist = prefs.get("ingredient_alerts", True) and ent.has_feature(db, user, "ingredient_alerts")
     n = 0
     for c in analysis.get("compatibility", []):
-        for a in c.get("critical_allergen_alerts", []):
+        for a in c.get("critical_allergen_alerts", []) if allergen_on else []:
             key = f"{product.id}:{c.get('profile_id')}:{a['allergen']}"
             if not _recent(db, user.id, "allergen_alert", key):
                 db.add(
@@ -78,7 +84,7 @@ def expiry_reminders(db: Session, days: int = 3) -> int:
     n = 0
     for i in rows:
         owner = db.get(User, i.owner_user_id)
-        if not owner or not ent.has_feature(db, owner, "pantry"):
+        if not owner or not ent.has_feature(db, owner, "pantry") or _prefs(owner).get("expiry") is False:
             continue
         left = (i.expires_on - date.today()).days
         when = "has expired" if left < 0 else "expires today" if left == 0 else f"expires in {left} day(s)"
@@ -105,8 +111,7 @@ def weekly_reports(db: Session, today: date | None = None) -> int:
     for u in db.scalars(select(User).where(User.is_active.is_(True))).all():
         if not ent.has_feature(db, u, "nutrition_reports"):
             continue
-        prefs = (u.settings.notification_prefs if u.settings else None) or {}
-        if prefs.get("weekly_report") is False:
+        if _prefs(u).get("weekly_report") is False:
             continue
         for fp in db.scalars(select(FamilyProfile).where(FamilyProfile.owner_user_id == u.id)).all():
             rep = tracking.period_report(db, fp.id, start, end, fp.goals)
@@ -137,8 +142,7 @@ def weekly_tip(db: Session, today: date | None = None) -> int:
     a = arts[today.isocalendar()[1] % len(arts)]
     n = 0
     for u in db.scalars(select(User).where(User.is_active.is_(True))).all():
-        prefs = (u.settings.notification_prefs if u.settings else None) or {}
-        if not prefs.get("tips"):
+        if not _prefs(u).get("tips"):
             continue
         if _recent(db, u.id, "tip", a.slug, hours=24 * 6):
             continue

@@ -9,11 +9,15 @@ Grounding rules enforced here:
 
 import base64
 import json
+import time
 from dataclasses import dataclass
 
 import httpx
 
 from app.core.config import get_settings
+
+RETRY_STATUS = (429, 500, 503)
+RETRY_BACKOFF_S = 1.5
 
 
 class AINotConfigured(Exception):
@@ -54,6 +58,7 @@ class AIProvider:
         images: list[tuple[str, bytes]] | None = None,
         json_mode: bool = False,
         temperature: float = 0.2,
+        max_tokens: int = 2048,
     ) -> AIResult:
         raise NotImplementedError
 
@@ -67,7 +72,7 @@ class GeminiProvider(AIProvider):
             raise AINotConfigured("GEMINI_API_KEY is not set")
         self.key, self.model, self.base = s.gemini_api_key, s.gemini_model, s.gemini_base_url
 
-    def generate(self, system, messages, *, images=None, json_mode=False, temperature=0.2) -> AIResult:
+    def generate(self, system, messages, *, images=None, json_mode=False, temperature=0.2, max_tokens=2048) -> AIResult:
         contents = []
         for i, m in enumerate(messages):
             parts: list[dict] = [{"text": m["content"]}]
@@ -78,15 +83,22 @@ class GeminiProvider(AIProvider):
         body: dict = {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": contents,
-            "generationConfig": {"temperature": temperature, "maxOutputTokens": 2048},
+            "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens},
         }
         if json_mode:
             body["generationConfig"]["responseMimeType"] = "application/json"
         try:
             with httpx.Client(timeout=45.0) as c:
-                r = c.post(
-                    f"{self.base}/models/{self.model}:generateContent", json=body, headers={"x-goog-api-key": self.key}
-                )
+                for attempt in range(3):
+                    r = c.post(
+                        f"{self.base}/models/{self.model}:generateContent",
+                        json=body,
+                        headers={"x-goog-api-key": self.key},
+                    )
+                    # Overloaded or rate-limited: brief backoff, then retry (up to 2 retries).
+                    if r.status_code not in RETRY_STATUS or attempt == 2:
+                        break
+                    time.sleep(RETRY_BACKOFF_S * (attempt + 1))
         except httpx.HTTPError as e:
             raise AIError(f"Gemini request failed: {e}") from e
         if r.status_code != 200:

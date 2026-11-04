@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/app_state.dart';
 import 'core/theme.dart';
 import 'screens/account_screens.dart';
+import 'screens/diary_screen.dart';
 import 'screens/home_screens.dart';
 import 'screens/scan_screen.dart';
 

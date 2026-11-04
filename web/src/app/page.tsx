@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Bell, BookOpen, GitCompare, ListChecks, MessageCircle, ScanLine, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, ChefHat, Compass, GitCompare, ListChecks, MessageCircle, ScanLine, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useApi } from "@/lib/useApi";
 import { Badge, Card, EmptyState, LinkButton, Page, SectionTitle, Skeleton } from "@/components/ui";
@@ -73,6 +73,8 @@ function Dashboard({ name, profileName }: { name: string; profileName?: string }
               { href: "/assistant", icon: MessageCircle, label: "Ask AI" },
               { href: "/profile", icon: Users, label: "Family" },
               { href: "/notifications", icon: Bell, label: "Alerts", badge: notes.data?.length },
+              { href: "/recipes", icon: ChefHat, label: "Recipes" },
+              { href: "/explore", icon: Compass, label: "More" },
             ].map((x) => (
               <Link key={x.href} href={x.href} className="card flex min-h-20 flex-col justify-between p-3 hover:border-brand/50">
                 <x.icon className="size-5 text-brand" aria-hidden />

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Mic, Search } from "lucide-react";
+import { BookOpen, Camera, Compass, Mic, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import type { ProductSummary } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
@@ -19,6 +19,30 @@ export default function Discover() {
   const [listening, setListening] = useState(false);
   const [voice, setVoice] = useState(false);
   const rec = useRef<SR | null>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
+  const [identified, setIdentified] = useState<string | null>(null);
+
+  const identify = async (file: File) => {
+    setLoading(true);
+    setError(null);
+    setIdentified(null);
+    try {
+      const fd = new FormData();
+      fd.append("task", "front");
+      fd.append("image", file);
+      const r = await api<{ extracted: { product_name: string | null; brand: string | null; visible_barcode_digits: string | null; confidence: number } }>("/analysis/image", { form: fd });
+      const x = r.extracted;
+      const term = x.visible_barcode_digits || [x.brand, x.product_name].filter(Boolean).join(" ");
+      if (!term) throw new Error("We couldn't read the product name from that photo. Try the front of the pack in good light.");
+      setIdentified(`Looks like ${[x.brand, x.product_name].filter(Boolean).join(" ") || x.visible_barcode_digits} (${Math.round((x.confidence || 0) * 100)}% sure). Check the result matches.`);
+      setQ(term);
+      setLoading(false);
+      await runRef.current(term);
+    } catch (e) {
+      setError(e);
+      setLoading(false);
+    }
+  };
 
   const run = async (term: string) => {
     if (term.trim().length < 2) return;
@@ -74,8 +98,12 @@ export default function Discover() {
             <Mic className={`size-4 ${listening ? "text-bad" : ""}`} />
           </Button>
         )}
+        <Button type="button" variant="secondary" aria-label="Identify a product from a photo" onClick={() => photoRef.current?.click()}><Camera className="size-4" /></Button>
         <Button type="submit" loading={loading}>Search</Button>
       </form>
+      <input ref={photoRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && identify(e.target.files[0])} />
+      {identified && <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm" role="status">{identified}</p>}
+      <Link href="/explore" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand"><Compass className="size-4" /> Explore recipes, meal plans, pantry, rankings and more</Link>
 
       {error ? <div className="mt-4"><ErrorBox error={error} /></div> : null}
       {ings.length > 0 && (

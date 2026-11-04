@@ -29,10 +29,24 @@ from app.models import (
 )
 from app.services import entitlements as ent
 from app.services import product_service as ps
+from app.services.alternatives import country_tag
 
 router = APIRouter(tags=["explore"])
 
 FREE_RANKING_ROWS = 5
+_COMPONENT_LABELS = {
+    "nutrition": "nutrition",
+    "ingredients": "ingredients and additives",
+    "processing": "processing",
+    "dietary_suitability": "dietary suitability",
+    "product_concerns": "product-specific concerns",
+}
+
+
+def _criteria(cfg: dict) -> str:
+    """Describe the ranking criteria from the active methodology's own weights."""
+    parts = [f"{_COMPONENT_LABELS.get(k, k)} {v}%" for k, v in cfg["weights"].items()]
+    return f"Overall health score ({', '.join(parts)}). Products with insufficient data are not ranked."
 
 
 # ------------------------------------------------------------------ categories & rankings
@@ -57,8 +71,7 @@ def _ranked(db, category: str, country: str | None) -> list[dict]:
         raise HTTPException(404, "Category not found")
     products = db.scalars(select(Product).where(Product.category_id == cat.id, Product.status == "active")).all()
     if country:
-        names = {"ng": "en:nigeria", "us": "en:united-states", "gb": "en:united-kingdom", "fr": "en:france"}
-        tag = names.get(country.lower(), f"en:{country.lower()}")
+        tag = country_tag(country)
         products = [p for p in products if tag in (p.countries_tags or [])]
     out = []
     for p in products:
@@ -87,8 +100,7 @@ def rankings(
     return {
         "category": category,
         "methodology_version": ps.active_methodology(db)["version"],
-        "criteria": "Overall health score (nutrition 40%, ingredients 25%, processing 15%, additives 10%, "
-        "other factors 10%). Products with insufficient data are not ranked.",
+        "criteria": _criteria(ps.active_methodology(db)),
         "total": len(rows),
         "results": rows if full else rows[:FREE_RANKING_ROWS],
         "locked": not full and len(rows) > FREE_RANKING_ROWS,

@@ -349,3 +349,49 @@ def test_foreign_label_is_analysed_from_its_translation(respx_mock, client, db, 
     assert r["ingredients_text"].startswith("Sucre") and r["ingredients_text_english"].startswith("Sugar")
     status = {a["code"]: a["status"] for a in r["analysis"]["allergens"]}
     assert status["milk"] == "contains" and status["nuts"] == "contains"
+
+
+@respx.mock(assert_all_called=False)
+def test_gemini_overload_is_retried(respx_mock, client, db, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "gemini_api_key", "test-key")
+    h, _ = new_user(client, db)
+    route = respx_mock.post(url__regex=r".*generateContent")
+    route.side_effect = [
+        respx.MockResponse(503, json={"error": {"status": "UNAVAILABLE"}}),
+        respx.MockResponse(200, json={"candidates": [{"content": {"parts": [{"text": "Hi"}]}}], "usageMetadata": {}}),
+    ]
+    r = client.post(f"{API}/assistant/ask", headers=h, json={"question": "Hello there"})
+    assert r.status_code == 200 and route.call_count == 2
+
+
+def test_planned_meals_link_to_recipes_by_dish_name(db):
+    from app.api.v1.recipes import match_recipe
+    from app.models import Recipe
+
+    public = db.query(Recipe).filter(Recipe.is_public.is_(True)).all()
+    by_id = {r.id: r.title for r in public}
+    assert by_id[match_recipe(public, "Akara and Pap")] == "Akara (bean fritters)"
+    assert by_id[match_recipe(public, "Nigerian Jollof Rice with Fried Plantain")] == "Jollof rice"
+    assert by_id[match_recipe(public, "Fish pepper soup with yam")] == "Fish pepper soup"
+    assert match_recipe(public, "Catfish stew") is None
+
+
+def test_alternatives_prefer_products_sold_locally(client, db, admin_headers):
+    def make(i, sugar, country):
+        r = client.post(f"{API}/admin/products", headers=admin_headers, json={
+            "barcode": ean13(f"61000000{i:04d}"), "name": f"Biscuit {i}", "category": "Local Biscuits",
+            "ingredients_text": "wheat flour, sugar, palm oil", "countries": [country],
+            "nutrition": {"energy_kcal": 450, "fat": 18, "saturated_fat": 8, "carbohydrates": 65, "sugars": sugar,
+                          "fiber": 2, "protein": 6, "salt": 0.8}})
+        return r.json()["id"]
+
+    base = make(1, 40, "nigeria")
+    us_better = make(2, 2, "united-states")
+    ng_better = make(3, 2, "nigeria")
+    h, _ = new_user(client, db)
+    alts = client.get(f"{API}/products/{base}/alternatives", headers=h, params={"country": "NG"}).json()
+    ids = [a["product"]["id"] for a in alts["alternatives"]]
+    assert ids.index(ng_better) < ids.index(us_better)
+    assert alts["alternatives"][0]["sold_in_country"] is True and alts["country"] == "NG"

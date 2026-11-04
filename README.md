@@ -40,7 +40,8 @@ Or run everything with PostgreSQL: `docker compose up --build`. See [DEPLOYMENT.
 [PROJECT_SPEC.md](PROJECT_SPEC.md) (roadmap and checklist) · [ARCHITECTURE.md](ARCHITECTURE.md) ·
 [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) · [API_DOCUMENTATION.md](API_DOCUMENTATION.md) ·
 [SCORING_METHODOLOGY.md](SCORING_METHODOLOGY.md) · [AI_INTEGRATION.md](AI_INTEGRATION.md) ·
-[SECURITY.md](SECURITY.md) · [DEPLOYMENT.md](DEPLOYMENT.md) · [TESTING.md](TESTING.md)
+[SECURITY.md](SECURITY.md) · [DEPLOYMENT.md](DEPLOYMENT.md) · [TESTING.md](TESTING.md) ·
+**[FEATURES.md](FEATURES.md) (coverage of all 170 planned capabilities, with plan per feature)**
 
 ## Feature status
 ✅ built and tested · 🟡 built, needs credentials or device testing · ⏳ designed (schema/API) but not built
@@ -77,19 +78,26 @@ Or run everything with PostgreSQL: `docker compose up --build`. See [DEPLOYMENT.
 - ✅ Alternatives (same category, filtered by profile, "better / not better" explanations)
 - ✅ N-way comparison with objectives and shareable reports
 - ✅ Favourites, trusted and incompatible lists, reviews, shopping lists
-- ✅ Food diary with weekly summary
-- ✅ Grounded AI assistant (🟡 needs `GEMINI_API_KEY`)
+- ✅ Category rankings, personalised recommendations, alternatives that prefer products sold in your country
+- ✅ Food diary with targets, water, weight, serving sizes, vitamins and minerals, weekly/monthly reports and insights
+- ✅ Meal-photo logging (AI estimates, reviewed before logging), including Nigerian dishes
+- ✅ Recipes (12 seeded, 8 Nigerian) with allergy checks and substitutions; AI recipes; meal planner with AI plans; recipe/plan → shopping list
+- ✅ Pantry with expiry reminders, grocery budget and shopping history, crowd-reported prices, household sharing
+- ✅ Grounded AI assistant, also answering in Pidgin, Yoruba, Igbo, Hausa, French and Spanish
+- ✅ Learn articles, Nigerian food glossary (local names pending review), food-safety research topics
+- ✅ Shareable product reports without personal data; allergen, watchlist, expiry, weekly-report and tip notifications
 
 **Business & operations**
 - ✅ Admin console: stats, failed scans, moderation, methodology publishing/activation, recalls with user notification, roles, audit log, AI usage
-- ✅ Plans (Free / Plus $3.99 / Premium $7.99 / Family $11.99, annual pricing), server-side entitlements and AI quotas
+- ✅ Plans (Free / Plus $3.99 / Premium $7.99 / Family $11.99, annual pricing), server-side entitlements, AI quotas and upgrade prompts. Safety information is never paywalled
+- ✅ Admin analytics, product and ingredient creation, lab-report and recall review, article and recipe management, daily jobs
 - 🟡 Stripe checkout and webhooks, RevenueCat and Paystack webhooks (signature-verified and idempotent; need live keys)
 - ✅ Privacy: health-data consent gate, data export, account deletion
 
 **Not built yet**
-- ⏳ Meal plans, recipes, grocery-list generation (tables exist)
 - ⏳ Restaurant discovery
-- ⏳ Retailer price data
+- ⏳ Retailer price feeds (prices are crowd-reported for now)
+- ⏳ West African food-composition data import (FAO/INFOODS)
 - ⏳ Official recall feed ingestion
 - ⏳ FCM push notifications
 - ⏳ Crashlytics
@@ -106,8 +114,10 @@ Or run everything with PostgreSQL: `docker compose up --build`. See [DEPLOYMENT.
   saturated fat and sodium per 100 g are high). See SCORING_METHODOLOGY.md.
 - **Web session storage.** The web app keeps the session token in `localStorage`. Move to httpOnly cookies
   before launch (SECURITY.md).
-- **Mobile app scope.** The Flutter app covers scanning, label OCR, results, search, diary and profiles. Family
-  profile editing, data export and account deletion currently link to the web app.
+- **Mobile app scope.** The Flutter app covers scanning, label OCR, results, search, diary (water, targets,
+  meal photos, reports), recipes, meal plans, pantry, budget logging, rankings, local foods, food safety and
+  learning. Household management, budget setting, family profile editing, data export and account deletion
+  are on the web app.
 
 ## Licensing & attribution
 Product data © Open Food Facts contributors, available under the Open Database License; images under
