@@ -6,7 +6,7 @@ No product records are seeded: products come from real data sources or verified 
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.data.content_seed import ARTICLES, LOCAL_INGREDIENT_NAMES, RECIPES
@@ -201,7 +201,13 @@ def seed_articles(db: Session) -> int:
     return n
 
 
+SEED_LOCK_ID = 727_466_401  # arbitrary constant: "only one process seeds at a time"
+
+
 def run(db: Session) -> dict:
+    if db.get_bind().dialect.name == "postgresql":
+        # Several workers/instances start together; the others wait here, then find the rows already present.
+        db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SEED_LOCK_ID})
     out = {
         "sources": seed_sources(db),
         "ingredients": seed_ingredients(db),
