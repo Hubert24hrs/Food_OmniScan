@@ -168,7 +168,16 @@ PAGES["account-deletion"] = (
 <p>Email <a href="mailto:{SUPPORT}?subject=Delete%20my%20Food%20omniScan%20account">{SUPPORT}</a> from the address on your
 account with the subject "Delete my Food omniScan account". We delete it within 30 days and confirm by email.</p>
 
-<h2>What is deleted</h2>
+<h2 id="some-data">Delete some data and keep your account</h2>
+<ul>
+  <li><b>Allergies, diets and avoid lists</b>: Profile, Privacy &amp; data, switch off "Store allergy &amp; diet information". They are deleted at once.</li>
+  <li><b>Pantry items and shopping lists</b>: delete them from the Pantry and Shopping lists screens.</li>
+  <li><b>Anything else</b> (eater profiles, diary, water and weight entries, scan history, saved products, purchases, recipes,
+  meal plans, reviews): email <a href="mailto:{SUPPORT}?subject=Delete%20some%20of%20my%20data">{SUPPORT}</a> from the address
+  on your account and say what to delete; we do it within 30 days and confirm by email.</li>
+</ul>
+
+<h2>What is deleted when you delete your account</h2>
 <ul>
   <li>Your account, email and password.</li>
   <li>Eater profiles, allergies, diet preferences and avoid lists.</li>
