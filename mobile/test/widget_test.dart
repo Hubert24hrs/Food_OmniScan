@@ -10,6 +10,7 @@ import 'package:food_omniscan/core/theme.dart';
 import 'package:food_omniscan/screens/assistant_screen.dart';
 import 'package:food_omniscan/screens/diary_screen.dart';
 import 'package:food_omniscan/screens/explore_hub.dart';
+import 'package:food_omniscan/screens/paywall_screen.dart';
 import 'package:food_omniscan/widgets/common.dart';
 import 'package:food_omniscan/widgets/fresh.dart';
 import 'package:food_omniscan/widgets/analysis_view.dart';
@@ -214,6 +215,8 @@ void main() {
   });
 
   testWidgets('diary shows targets, water and the vitamins upgrade prompt', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(500, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final api = ApiClient(
       baseUrl: 'http://api.test/api/v1',
       client: MockClient((req) async => http.Response(
@@ -287,7 +290,118 @@ void main() {
     final link = classifyCode('http://192.168.100.8:8090/food-omniscan-debug.apk');
     expect(link, isA<LinkCode>());
     expect((link as LinkCode).uri.host, '192.168.100.8');
-    expect(classifyCode('WIFI:T:WPA;S:Home;P:secret;;'), isA<TextCode>());
     expect(classifyCode('hello'), isA<TextCode>());
+  });
+
+  test('scanner understands Wi-Fi, phone, email, SMS, map and contact codes', () {
+    final wifi = classifyCode(r'WIFI:T:WPA;S:Home\;Net;P:sec:ret;;') as WifiCode;
+    expect(wifi.ssid, 'Home;Net');
+    expect(wifi.password, 'sec:ret');
+    expect(wifi.security, 'WPA');
+    final tel = classifyCode('tel:+2348012345678') as ActionCode;
+    expect(tel.kind, ActionKind.phone);
+    expect(tel.label, '+2348012345678');
+    expect((classifyCode('mailto:hello@example.com?subject=Hi') as ActionCode).kind, ActionKind.email);
+    final mat = classifyCode('MATMSG:TO:a@example.com;SUB:Hi;BODY:Yo;;') as ActionCode;
+    expect(mat.uri.scheme, 'mailto');
+    expect(mat.label, 'a@example.com');
+    final sms = classifyCode('SMSTO:+15551234567:Hello there') as ActionCode;
+    expect(sms.kind, ActionKind.sms);
+    expect(sms.uri.queryParameters['body'], 'Hello there');
+    expect((classifyCode('geo:6.5244,3.3792?q=Lagos') as ActionCode).label, '6.5244,3.3792');
+    expect((classifyCode('BEGIN:VCARD\nVERSION:3.0\nFN:Ada Obi\nEND:VCARD') as ContactCode).name, 'Ada Obi');
+    expect((classifyCode('MECARD:N:Obi,Ada;TEL:123;;') as ContactCode).name, 'Ada Obi');
+    // 1D codes: ITF-14 case codes and GS1-128 with a symbology prefix are products; store codes are text.
+    expect((classifyCode('10012345678902') as ProductCode).gtin, '10012345678902');
+    expect((classifyCode(']C10109506000134352') as ProductCode).gtin, '09506000134352');
+    expect(classifyCode('ABC-123'), isA<TextCode>());
+    expect(classifyCode('2024-01-01'), isA<TextCode>());
+  });
+
+  Map<String, dynamic> plan(String tier, num monthly, num? annual) =>
+      {'tier': tier, 'monthly_usd': monthly, 'annual_usd': annual, 'features': ['Everything in Free', '$tier feature']};
+
+  ApiClient billingApi() => ApiClient(
+        baseUrl: 'http://api.test/api/v1',
+        client: MockClient((req) async {
+          if (req.url.path.endsWith('/billing/plans')) {
+            return http.Response(
+                jsonEncode([plan('free', 0, null), plan('plus', 3.99, 39.99), plan('premium', 7.99, 79.99), plan('family', 11.99, 119.99)]), 200);
+          }
+          if (req.url.path.endsWith('/assistant/ask')) {
+            return http.Response(
+                jsonEncode({
+                  'detail': {'code': 'quota_exceeded', 'required_tier': 'plus', 'message': "You've used all 5 AI questions this month."}
+                }),
+                402);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+
+  testWidgets('paywall shows the plans with yearly savings and a checkout button', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(420, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final app = AppState(api: billingApi())..me = {'id': 'u1', 'tier': 'free'};
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: app, child: MaterialApp(builder: (c, child) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: child!), home: const PaywallScreen(reason: "You've used all 5 AI questions this month."))));
+    await tester.pumpAndSettle();
+    expect(find.text('Unlock the full Food omniScan'), findsOneWidget);
+    expect(find.text("You've used all 5 AI questions this month."), findsOneWidget);
+    expect(find.text('Yearly · save 17%'), findsOneWidget);
+    expect(find.text('MOST POPULAR'), findsOneWidget);
+    expect(find.text('Get Premium · \$79.99/year'), findsOneWidget);
+    await tester.tap(find.text('Plus'));
+    await tester.tap(find.text('Monthly'));
+    await tester.pump();
+    expect(find.text('Get Plus · \$3.99/month'), findsOneWidget);
+  });
+
+  testWidgets('running out of AI questions opens the paywall', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(420, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final app = AppState(api: billingApi())..me = {'id': 'u1', 'tier': 'free'};
+    await tester.pumpWidget(ChangeNotifierProvider.value(value: app, child: MaterialApp(builder: (c, child) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: child!), home: const AssistantScreen())));
+    await tester.enterText(find.byType(TextField), 'Is palm oil healthy?');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    expect(find.byType(PaywallScreen), findsOneWidget);
+    expect(find.text("You've used all 5 AI questions this month."), findsWidgets);
+    Navigator.of(tester.element(find.byType(PaywallScreen))).pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(PaywallScreen), findsNothing);
+  });
+
+  testWidgets('upgrade prompts show for free users and hide for subscribers', (tester) async {
+    final app = AppState(api: billingApi())
+      ..me = {'id': 'u1', 'tier': 'free'}
+      ..usage = {
+        'tier': 'free',
+        'features': {
+          'ai_assistant': {'kind': 'metered', 'label': 'AI nutrition assistant questions', 'limit': 5, 'used': 4},
+          'pantry': {'kind': 'access', 'label': 'Pantry', 'limit': 0},
+        }
+      };
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: app, child: const MaterialApp(home: Scaffold(body: Column(children: [UpgradeChip(), UpgradeBanner()])))));
+    expect(find.text('Go Premium'), findsOneWidget);
+    expect(find.text('Get more with Premium'), findsOneWidget);
+    expect(find.text('1 of 5 free AI nutrition assistant questions left this month'), findsOneWidget);
+    app.me = {'id': 'u1', 'tier': 'premium'};
+    app.notifyListeners();
+    await tester.pump();
+    expect(find.text('Go Premium'), findsNothing);
+    expect(find.text('Get more with Premium'), findsNothing);
+  });
+
+  testWidgets('locked features in Explore open the plans for free users', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 6000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final app = AppState(api: billingApi())..me = {'id': 'u1', 'role': 'user', 'tier': 'free'};
+    await tester.pumpWidget(ChangeNotifierProvider.value(value: app, child: MaterialApp(builder: (c, child) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: child!), home: const ExploreScreen())));
+    await tester.tap(find.text('Pantry'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PaywallScreen), findsOneWidget);
+    expect(find.text('This feature is included with Plus.'), findsOneWidget);
   });
 }

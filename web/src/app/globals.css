@@ -170,6 +170,18 @@ button.card:hover {
   background: var(--brand-strong);
 }
 
+/* Upgrade / buy buttons: tomato red so the plans are easy to find. */
+.btn-accent {
+  background: #dc2626;
+  color: #fff;
+}
+.btn-accent:hover {
+  background: #b91c1c;
+}
+svg.lucide-crown {
+  animation: nudge 2.6s ease-in-out infinite;
+}
+
 /* Thin tri-colour accent rule (green / orange / red), like a produce label stripe. */
 .fresh-stripe {
   height: 3px;

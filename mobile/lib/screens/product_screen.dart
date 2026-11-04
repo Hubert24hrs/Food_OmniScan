@@ -8,6 +8,7 @@ import '../widgets/analysis_view.dart';
 import '../widgets/common.dart';
 import 'product_extras.dart';
 import 'assistant_screen.dart';
+import 'paywall_screen.dart';
 
 /// Loads a product by barcode (scan flow) or id, with an offline cached fallback.
 class ProductScreen extends StatefulWidget {
@@ -188,7 +189,11 @@ class _ProductScreenState extends State<ProductScreen> {
         ]),
         const SizedBox(height: 12),
         AnalysisView(analysis: data!['analysis'] as Map<String, dynamic>),
-        if (!offlineCopy) ...[const SizedBox(height: 12), ProductExtras(productId: p['id'] as String)],
+        if (!offlineCopy) ...[
+          const SizedBox(height: 12),
+          const UpsellStrip(text: 'See vitamins, prices across stores and personal picks with Plus'),
+          ProductExtras(productId: p['id'] as String),
+        ],
         Padding(
           padding: const EdgeInsets.all(12),
           child: Text('${prov['attribution'] ?? prov['source']}', style: t.bodySmall),

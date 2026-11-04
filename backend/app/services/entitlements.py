@@ -166,6 +166,8 @@ def require_quota(db: Session, user: User, feature: str) -> None:
         raise _upgrade(db, tier, feature)
     used = used_this_month(db, user, feature)
     if used + CREDIT_COST.get(feature, 1) > lim:
+        label = FEATURE_LABELS.get(feature, feature.replace("_", " "))
+        nxt = next_tier(db, tier, feature)
         raise HTTPException(
             status.HTTP_402_PAYMENT_REQUIRED,
             {
@@ -174,9 +176,28 @@ def require_quota(db: Session, user: User, feature: str) -> None:
                 "tier": tier,
                 "limit": lim,
                 "used": used,
-                "message": f"You've used all {lim} {feature.replace('_', ' ')} credits this month on the {tier} plan.",
+                "required_tier": nxt,
+                "message": f"You've used all {lim} {_mid_sentence(label)} on the {tier.title()} plan this month."
+                + (f" {nxt.title()} gives you more." if nxt else ""),
             },
         )
+
+
+def _mid_sentence(label: str) -> str:
+    """Lower-case a label's first letter for use mid-sentence, unless it starts with an acronym ("AI ...")."""
+    return label if label[:2].isupper() else label[:1].lower() + label[1:]
+
+
+def next_tier(db: Session, tier: str, feature: str) -> str | None:
+    """Cheapest plan above `tier` with a higher (or unlimited) allowance for `feature`."""
+    cur = limit_for(db, tier, feature)
+    if cur is None:
+        return None  # already unlimited
+    for t in TIERS[TIERS.index(tier) + 1 :]:
+        lim = limit_for(db, t, feature)
+        if lim is None or (cur is not None and lim > cur):
+            return t
+    return None
 
 
 def record_usage(
@@ -222,6 +243,7 @@ def count_cap(db: Session, user: User, feature: str, current: int) -> None:
                 "feature": feature,
                 "tier": tier,
                 "limit": lim,
+                "required_tier": next_tier(db, tier, feature),
                 "message": f"Your {tier} plan allows {lim} {feature.replace('_', ' ')}. Upgrade for more.",
             },
         )

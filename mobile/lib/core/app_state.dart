@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
 import 'api.dart';
+import 'billing.dart';
 import 'offline.dart';
 
 class AppState extends ChangeNotifier {
@@ -12,6 +13,9 @@ class AppState extends ChangeNotifier {
   final ApiClient api;
   final OfflineStore store;
   Map<String, dynamic>? me;
+
+  /// This month's plan usage from /billing/me (null when signed out).
+  Map<String, dynamic>? usage;
   List<Map<String, dynamic>> profiles = [];
   bool loading = true;
   bool online = true;
@@ -19,6 +23,24 @@ class AppState extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _conn;
 
   bool get signedIn => me != null;
+
+  String get tier => (me?['tier'] as String?) ?? 'free';
+
+  /// Signed-out people count as free too: upgrade prompts are shown to everyone not paying.
+  bool get isFree => tier == 'free';
+
+  /// Metered features (AI questions, photo reads…) with how many are left this month, lowest first.
+  List<({String label, int used, int limit})> get allowances {
+    final f = usage?['features'] as Map<String, dynamic>?;
+    if (f == null) return [];
+    final out = [
+      for (final v in f.values.cast<Map<String, dynamic>>())
+        if (v['kind'] == 'metered' && v['limit'] is int && (v['limit'] as int) > 0)
+          (label: v['label'] as String, used: (v['used'] as int?) ?? 0, limit: v['limit'] as int),
+    ];
+    out.sort((a, b) => (a.limit - a.used).compareTo(b.limit - b.used));
+    return out;
+  }
 
   Map<String, dynamic>? get activeProfile {
     if (profiles.isEmpty) return null;
@@ -41,6 +63,7 @@ class AppState extends ChangeNotifier {
     if (api.token == null) {
       me = null;
       profiles = [];
+      usage = null;
     } else {
       try {
         me = await api.get('/me') as Map<String, dynamic>;
@@ -49,11 +72,31 @@ class AppState extends ChangeNotifier {
         if (!e.isNetwork) {
           me = null;
           profiles = [];
+          usage = null;
         }
+      }
+    }
+    if (me != null) {
+      try {
+        usage = await api.get('/billing/me') as Map<String, dynamic>;
+      } on ApiException {
+        // usage meters are a nice-to-have; never sign someone out over them
       }
     }
     loading = false;
     notifyListeners();
+    await StoreBilling.identify(me?['id'] as String?);
+  }
+
+  /// Re-read usage after something that spends an allowance (an AI answer, a photo read…).
+  Future<void> refreshUsage() async {
+    if (!signedIn) return;
+    try {
+      usage = await api.get('/billing/me') as Map<String, dynamic>;
+      notifyListeners();
+    } on ApiException {
+      // keep the last known numbers
+    }
   }
 
   Future<void> login(String email, String password) async {
@@ -80,7 +123,9 @@ class AppState extends ChangeNotifier {
     await api.setToken(null);
     me = null;
     profiles = [];
+    usage = null;
     notifyListeners();
+    await StoreBilling.identify(null);
   }
 
   Future<void> setActiveProfile(String id) async {

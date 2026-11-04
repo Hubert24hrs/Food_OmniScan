@@ -73,7 +73,7 @@ function Assistant() {
         <Button type="submit" loading={busy} aria-label="Send"><Send className="size-4" /></Button>
       </form>
       <label className="mt-2 flex items-center gap-2 text-xs text-muted">Answer in
-        <select className="rounded-lg border border-line bg-surface px-2 py-1 text-xs text-ink" value={language} onChange={(e) => setLanguage(e.target.value)}>
+        <select aria-label="Answer language" className="rounded-lg border border-line bg-surface px-2 py-1 text-xs text-ink" value={language} onChange={(e) => setLanguage(e.target.value)}>
           {[["en", "English"], ["pcm", "Pidgin"], ["yo", "Yoruba"], ["ig", "Igbo"], ["ha", "Hausa"], ["fr", "French"], ["es", "Spanish"]].map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
         {language !== "en" && <span>(Plus)</span>}

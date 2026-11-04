@@ -41,7 +41,8 @@ Or run everything with PostgreSQL: `docker compose up --build`. See [DEPLOYMENT.
 [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) · [API_DOCUMENTATION.md](API_DOCUMENTATION.md) ·
 [SCORING_METHODOLOGY.md](SCORING_METHODOLOGY.md) · [AI_INTEGRATION.md](AI_INTEGRATION.md) ·
 [SECURITY.md](SECURITY.md) · [DEPLOYMENT.md](DEPLOYMENT.md) · [TESTING.md](TESTING.md) ·
-**[FEATURES.md](FEATURES.md) (coverage of all 170 planned capabilities, with plan per feature)**
+**[FEATURES.md](FEATURES.md) (coverage of all 170 planned capabilities, with plan per feature)** ·
+**[PLAY_STORE.md](PLAY_STORE.md) (Google Play release: subscriptions, signing, listing, data safety)**
 
 ## Feature status
 ✅ built and tested · 🟡 built, needs credentials or device testing · ⏳ designed (schema/API) but not built
@@ -115,7 +116,8 @@ Or run everything with PostgreSQL: `docker compose up --build`. See [DEPLOYMENT.
 - **Web session storage.** The web app keeps the session token in `localStorage`. Move to httpOnly cookies
   before launch (SECURITY.md).
 - **Mobile app scope.** The Flutter app is the main platform and has every feature, including admin tools for staff accounts.
-  Plans are bought on the web in test builds; store builds will use Google Play and App Store billing via RevenueCat.
+  Store builds sell plans through Google Play Billing (RevenueCat); debug builds without a RevenueCat key open the web checkout.
+  iOS purchases need the App Store products and a RevenueCat Apple key (not set up yet).
 
 ## Licensing & attribution
 Product data © Open Food Facts contributors, available under the Open Database License; images under

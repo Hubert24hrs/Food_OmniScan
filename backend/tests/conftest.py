@@ -2,22 +2,24 @@ import os
 import tempfile
 
 _tmp = tempfile.mkdtemp(prefix="omniscan-test-")
-os.environ.update({
-    "ENVIRONMENT": "test",
-    "DATABASE_URL": f"sqlite:///{_tmp}/test.db".replace("\\", "/"),
-    "JWT_SECRET": "test-secret-key-0123456789abcdef",
-    "BOOTSTRAP_ADMIN_EMAILS": "admin@example.com",
-    "UPLOAD_DIR": os.path.join(_tmp, "uploads"),
-    "AUTH_PROVIDER": "local",
-    "GEMINI_API_KEY": "",
-    "USDA_API_KEY": "",
-    "STRIPE_SECRET_KEY": "",
-    "STRIPE_WEBHOOK_SECRET": "whsec_test",
-    "REVENUECAT_WEBHOOK_AUTH": "rc-test-auth",
-    "PAYSTACK_SECRET_KEY": "sk_test_paystack",
-    "RATE_LIMIT_AUTH_PER_MINUTE": "1000",
-    "RATE_LIMIT_PER_MINUTE": "1000",
-})
+os.environ.update(
+    {
+        "ENVIRONMENT": "test",
+        "DATABASE_URL": f"sqlite:///{_tmp}/test.db".replace("\\", "/"),
+        "JWT_SECRET": "test-secret-key-0123456789abcdef",
+        "BOOTSTRAP_ADMIN_EMAILS": "admin@example.com",
+        "UPLOAD_DIR": os.path.join(_tmp, "uploads"),
+        "AUTH_PROVIDER": "local",
+        "GEMINI_API_KEY": "",
+        "USDA_API_KEY": "",
+        "STRIPE_SECRET_KEY": "",
+        "STRIPE_WEBHOOK_SECRET": "whsec_test",
+        "REVENUECAT_WEBHOOK_AUTH": "rc-test-auth",
+        "PAYSTACK_SECRET_KEY": "sk_test_paystack",
+        "RATE_LIMIT_AUTH_PER_MINUTE": "1000",
+        "RATE_LIMIT_PER_MINUTE": "1000",
+    }
+)
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -63,9 +65,17 @@ _counter = {"n": 0}
 def register(client, email: str | None = None, consent: bool = True, country: str = "US") -> dict:
     _counter["n"] += 1
     email = email or f"user{_counter['n']}@example.com"
-    r = client.post("/api/v1/auth/register", json={"email": email, "password": "Sup3rSecret", "display_name": "Test",
-                                                   "country": country, "accept_terms": True,
-                                                   "consent_health_data": consent})
+    r = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": "Sup3rSecret",
+            "display_name": "Test",
+            "country": country,
+            "accept_terms": True,
+            "consent_health_data": consent,
+        },
+    )
     if r.status_code == 409:
         r = client.post("/api/v1/auth/login", json={"email": email, "password": "Sup3rSecret"})
     assert r.status_code in (200, 201), r.text
@@ -84,6 +94,7 @@ def admin_headers(client):
 
 # --------------------------------------------------------------------------- OFF fixtures
 # Shapes mirror Open Food Facts API v2 responses. Values are test fixtures, not product data.
+
 
 def off_product(code: str, **overrides) -> dict:
     p = {
@@ -104,8 +115,16 @@ def off_product(code: str, **overrides) -> dict:
         "nutriscore_grade": "e",
         "serving_quantity": "355",
         "serving_size": "12 fl oz (355 ml)",
-        "nutriments": {"energy-kcal_100g": 42, "fat_100g": 0, "saturated-fat_100g": 0, "carbohydrates_100g": 10.6,
-                       "sugars_100g": 10.6, "proteins_100g": 0, "salt_100g": 0.03, "sodium_100g": 0.012},
+        "nutriments": {
+            "energy-kcal_100g": 42,
+            "fat_100g": 0,
+            "saturated-fat_100g": 0,
+            "carbohydrates_100g": 10.6,
+            "sugars_100g": 10.6,
+            "proteins_100g": 0,
+            "salt_100g": 0.03,
+            "sodium_100g": 0.012,
+        },
         "image_front_url": "https://images.openfoodfacts.org/test/front.jpg",
     }
     p.update(overrides)

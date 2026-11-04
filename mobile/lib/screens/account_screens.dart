@@ -8,6 +8,8 @@ import '../widgets/fresh.dart';
 import 'account_extras.dart';
 import 'admin_screens.dart';
 import 'more_screens.dart';
+import 'paywall_screen.dart';
+import '../core/theme.dart';
 
 String _restrictions(Map<String, dynamic> p) {
   final items = [...(p['allergens'] as List).map((a) => a['code'] as String), ...(p['diets'] as List).cast<String>()];
@@ -79,13 +81,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final staff = me['role'] == 'admin' || me['role'] == 'moderator';
     void go(Widget w) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => w));
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: const Text('Profile'), actions: const [UpgradeChip()]),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         ListTile(
           leading: const IconTile(icon: Icons.person_rounded, index: 0),
           title: Text(me['display_name'] as String? ?? me['email'] as String, style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('${me['email']} · ${me['tier']} plan'),
+          subtitle: Text('${me['email']} · ${tierName(app.tier)} plan'),
         ),
+        _PlanCard(tier: app.tier, allowances: app.allowances),
         const SectionHeader('Who are you checking for?'),
         RadioGroup<String>(
           groupValue: app.activeProfile?['id'] as String?,
@@ -124,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const Divider(height: 24),
         for (final (i, (icon, label, screen)) in <(IconData, String, Widget)>[
           (Icons.notifications_none, 'Notifications', const NotificationSettingsScreen()),
-          (Icons.workspace_premium_outlined, 'Plans & usage', const PlansScreen()),
+          (Icons.workspace_premium_outlined, 'Plans & usage', const PaywallScreen()),
           (Icons.home_outlined, 'Household', const HouseholdScreen()),
           (Icons.add_box_outlined, 'Add a missing product', const SubmitProductScreen()),
           (Icons.lock_outline, 'Privacy & data', const PrivacyScreen()),
@@ -134,6 +137,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         OutlinedButton.icon(onPressed: app.logout, icon: const Icon(Icons.logout), label: const Text('Sign out')),
       ]),
+    );
+  }
+}
+
+/// Current plan, what's left this month, and the way to upgrade.
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({required this.tier, required this.allowances});
+  final String tier;
+  final List<({String label, int used, int limit})> allowances;
+
+  @override
+  Widget build(BuildContext context) {
+    final free = tier == 'free';
+    return Card(
+      color: free ? Brand.tomatoSoft : Brand.greenSoft,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.workspace_premium, color: free ? Brand.tomato : Brand.green, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(free ? "You're on the Free plan" : "You're on ${tierName(tier)}",
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF1F2937))),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          DefaultTextStyle.merge(
+            style: const TextStyle(color: Color(0xFF1F2937)),
+            child: Column(children: [for (final a in allowances.take(3)) AllowanceMeter(label: a.label, used: a.used, limit: a.limit)]),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: free ? Brand.tomato : Brand.green, foregroundColor: Colors.white),
+              onPressed: () => showPaywall(context),
+              icon: Icon(free ? Icons.lock_open : Icons.tune),
+              label: Text(free ? 'Upgrade from \$3.99 a month' : 'Change or manage plan'),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }

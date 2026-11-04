@@ -7,6 +7,7 @@ import '../widgets/score_widgets.dart';
 import 'explore_hub.dart';
 import 'product_screen.dart';
 import '../widgets/fresh.dart';
+import 'paywall_screen.dart';
 
 class ProductTile extends StatelessWidget {
   const ProductTile({super.key, required this.p, this.subtitle});
@@ -74,7 +75,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final app = context.watch<AppState>();
     final t = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Wordmark(), bottom: const PreferredSize(preferredSize: Size.fromHeight(3), child: FreshStripe())),
+      appBar: AppBar(
+        title: const Wordmark(),
+        actions: const [UpgradeChip()],
+        bottom: const PreferredSize(preferredSize: Size.fromHeight(3), child: FreshStripe()),
+      ),
       body: RefreshIndicator(
         onRefresh: () async => setState(() => _recent = _load()),
         child: ListView(padding: const EdgeInsets.all(16), children: [
@@ -101,6 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ]),
           ),
           const SizedBox(height: 12),
+          const UpgradeBanner(),
+          const SizedBox(height: 4),
           QuickGrid(onAll: widget.onExplore ?? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExploreScreen()))),
           const SizedBox(height: 16),
           Text('Recent', style: t.titleMedium?.copyWith(fontWeight: FontWeight.w800)),

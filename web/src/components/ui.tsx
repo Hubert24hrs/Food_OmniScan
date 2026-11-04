@@ -90,13 +90,15 @@ export function UpgradeCard({ error, title }: { error?: unknown; title?: string 
   const d = ((error as { detail?: PlanDetail })?.detail || {}) as PlanDetail;
   const tier = d.required_tier;
   return (
-    <div role="status" className="flex items-start gap-3 rounded-2xl border border-brand/30 bg-brand-soft p-4 text-sm">
-      <Lock className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
-      <div className="flex-1">
+    <div role="status" className="flex flex-wrap items-start gap-3 rounded-2xl border border-accent/30 bg-accent-soft p-4 text-sm">
+      <Lock className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
+      <div className="min-w-0 flex-1">
         <p className="font-semibold">{title || (tier ? `Included with ${tier[0].toUpperCase() + tier.slice(1)}` : "Plan limit reached")}</p>
         <p className="mt-0.5 text-muted">{(error as Error)?.message || d.message}</p>
       </div>
-      <Link href="/subscription" className="rounded-lg px-3 py-1 font-semibold text-brand underline">See plans</Link>
+      <Link href={`/subscription${tier ? `?tier=${tier}` : ""}`} className="btn-accent inline-flex min-h-9 items-center rounded-xl px-3 font-bold">
+        {tier ? `Unlock with ${tier[0].toUpperCase() + tier.slice(1)}` : "See plans"}
+      </Link>
     </div>
   );
 }

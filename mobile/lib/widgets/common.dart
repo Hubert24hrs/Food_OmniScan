@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../core/api.dart';
 import '../core/app_state.dart';
+import '../core/theme.dart';
+import '../screens/paywall_screen.dart';
 
-/// Upgrade prompt for features that need a paid plan. Plans are bought on the web or in the store build.
+/// Upgrade prompt for features that need a paid plan, with a button straight to the plans.
 class UpgradeNotice extends StatelessWidget {
   const UpgradeNotice({super.key, required this.message, this.tier});
   final String message;
@@ -12,14 +14,29 @@ class UpgradeNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Card(
-      color: cs.primaryContainer,
-      child: ListTile(
-        leading: Icon(Icons.lock_outline, color: cs.onPrimaryContainer),
-        title: Text(tier != null ? 'Included with ${tier![0].toUpperCase()}${tier!.substring(1)}' : 'Plan limit reached',
-            style: TextStyle(fontWeight: FontWeight.w700, color: cs.onPrimaryContainer)),
-        subtitle: Text(message, style: TextStyle(color: cs.onPrimaryContainer)),
+      color: Brand.tomatoSoft,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.workspace_premium, color: Brand.tomato),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(tier != null ? 'Included with ${tierName(tier!)}' : 'Plan limit reached',
+                  style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF7F1D1D), fontSize: 15)),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          Text(message, style: const TextStyle(color: Color(0xFF7F1D1D))),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: Brand.tomato, foregroundColor: Colors.white),
+            onPressed: () => showPaywall(context, reason: message, tier: tier),
+            icon: const Icon(Icons.lock_open),
+            label: Text(tier != null ? 'Unlock with ${tierName(tier!)}' : 'See plans'),
+          ),
+        ]),
       ),
     );
   }
@@ -95,9 +112,9 @@ Future<T?> runAction<T>(BuildContext context, Future<T> Function() action, {Stri
     if (ok != null) messenger.showSnackBar(SnackBar(content: Text(ok)));
     return r;
   } on ApiException catch (e) {
-    final tier = e.requiredTier;
-    messenger.showSnackBar(SnackBar(
-        content: Text(e.isPlan && tier != null ? '${e.message} (${tier[0].toUpperCase()}${tier.substring(1)} plan)' : e.message)));
+    // Out of allowance or a paid feature: take them to the plans rather than a passing snackbar.
+    if (context.mounted && handlePlanError(context, e)) return null;
+    messenger.showSnackBar(SnackBar(content: Text(e.message)));
     return null;
   }
 }

@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { relDays } from "@/lib/format";
 import type { ProductSummary } from "@/lib/types";
 import { LogoMark } from "@/components/Logo";
+import { UpgradeBanner } from "@/components/Upsell";
 
 type Hist = { id: string; product: ProductSummary; last_scanned_at: string; scan_count: number };
 
@@ -43,6 +44,8 @@ function Dashboard({ name, profileName }: { name: string; profileName?: string }
           </div>
         </div>
       </section>
+
+      <UpgradeBanner />
 
       {restrictions === 0 && (
         <Card className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -158,6 +161,17 @@ function Landing() {
             <p className="mt-1 text-sm text-muted">{f.b}</p>
           </Card>
         ))}
+      </section>
+      <section className="card mt-6 flex flex-wrap items-center gap-4 p-6">
+        <div className="min-w-0 flex-1">
+          <Badge tone="tomato">Premium</Badge>
+          <p className="mt-2 font-display text-2xl font-extrabold">Free to scan. Premium to plan.</p>
+          <p className="mt-1 text-sm text-muted">
+            Upgrade for AI meal plans with Nigerian, US and European dishes, vitamin tracking, pantry, grocery budget, price comparison and family sharing.
+            Plans from $3.99 a month.
+          </p>
+        </div>
+        <Link href="/subscription" className="btn-accent inline-flex min-h-11 items-center rounded-xl px-5 text-sm font-bold">See plans</Link>
       </section>
       <p className="mt-8 text-center text-xs text-muted">Food omniScan gives general nutrition information, not medical advice. Always read the package label.</p>
     </Page>

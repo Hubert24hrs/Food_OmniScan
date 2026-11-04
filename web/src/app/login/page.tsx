@@ -28,7 +28,8 @@ function LoginForm() {
             setError(null);
             try {
               await login(email, password);
-              router.push(next.startsWith("/") ? next : "/");
+              // Only same-site paths: "//host" or "/\host" would leave the site.
+              router.push(/^\/(?![/\\])/.test(next) ? next : "/");
             } catch (err) {
               setError(err);
             } finally {

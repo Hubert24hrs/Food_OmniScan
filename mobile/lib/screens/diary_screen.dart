@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/common.dart';
+import 'paywall_screen.dart';
 
 const _totals = [('Calories', 'energy_kcal', ''), ('Protein', 'protein', 'g'), ('Carbs', 'carbohydrates', 'g'), ('Fat', 'fat', 'g'), ('Fiber', 'fiber', 'g'), ('Sodium', 'sodium_mg', 'mg')];
 
@@ -258,6 +259,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final micros = day?['micros'] as Map<String, dynamic>?;
     return Scaffold(
       appBar: AppBar(title: const Text('Food diary'), actions: [
+        const UpgradeChip(),
         IconButton(tooltip: 'Previous day', icon: const Icon(Icons.chevron_left), onPressed: () => _shiftDay(-1)),
         TextButton(
           onPressed: () async {

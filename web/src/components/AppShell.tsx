@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Compass, Home, NotebookPen, ScanLine, Search, Shield, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/lib/auth";
+import { PaywallListener, UpgradeButton } from "./Upsell";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
@@ -114,11 +115,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Suspense fallback={null}>
             <DesktopNav />
           </Suspense>
-          <AccountControl />
+          <div className="flex items-center gap-2">
+            <UpgradeButton />
+            <AccountControl />
+          </div>
         </div>
         <div className="fresh-stripe" aria-hidden />
       </header>
       <main id="main">{children}</main>
+      <PaywallListener />
       <Suspense fallback={null}>
         <MobileNav />
       </Suspense>

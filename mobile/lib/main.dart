@@ -7,6 +7,7 @@ import 'screens/account_screens.dart';
 import 'screens/diary_screen.dart';
 import 'screens/explore_hub.dart';
 import 'screens/home_screens.dart';
+import 'screens/paywall_screen.dart';
 import 'screens/scan_screen.dart';
 import 'widgets/fresh.dart';
 
@@ -40,9 +41,17 @@ class Shell extends StatefulWidget {
 
 class _ShellState extends State<Shell> {
   int index = 0;
+  bool _upsellChecked = false;
 
   @override
   Widget build(BuildContext context) {
+    // Once the account has loaded, free users may see the plans (at most once a day).
+    if (!_upsellChecked && !context.watch<AppState>().loading) {
+      _upsellChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) maybeDailyUpsell(context);
+      });
+    }
     final pages = [
       HomeScreen(onScan: () => setState(() => index = 2), onExplore: () => setState(() => index = 1)),
       const ExploreScreen(),

@@ -4,7 +4,29 @@ import { useEffect, useRef, useState } from "react";
 import { Flashlight, FlashlightOff, VideoOff } from "lucide-react";
 import type { IScannerControls } from "@zxing/browser";
 
-/** Live camera scanner for product barcodes (EAN-13/8, UPC-A/E) and QR / Data Matrix codes, using ZXing on-device. */
+async function makeReader() {
+  const [{ BrowserMultiFormatReader }, { DecodeHintType }] = await Promise.all([import("@zxing/browser"), import("@zxing/library")]);
+  // No format hint: ZXing then tries every format it knows (EAN/UPC, Code 128/39/93, Codabar, ITF,
+  // QR, Data Matrix, Aztec, PDF417, GS1 DataBar).
+  const hints = new Map();
+  hints.set(DecodeHintType.TRY_HARDER, true);
+  return new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 120 });
+}
+
+/** Reads a barcode or QR code from a photo or screenshot; null if none is found. */
+export async function decodeImageFile(file: File): Promise<string | null> {
+  const url = URL.createObjectURL(file);
+  try {
+    const reader = await makeReader();
+    return (await reader.decodeFromImageUrl(url)).getText();
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Live camera scanner for every common barcode and 2D code (product barcodes, QR, Data Matrix…), using ZXing on-device. */
 export function BarcodeScanner({ onDetected, paused }: { onDetected: (code: string) => void; paused?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const controls = useRef<IScannerControls | null>(null);
@@ -19,11 +41,7 @@ export function BarcodeScanner({ onDetected, paused }: { onDetected: (code: stri
     (async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw new Error("This browser can't access the camera. Enter the barcode below.");
-        const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([import("@zxing/browser"), import("@zxing/library")]);
-        const hints = new Map();
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E, BarcodeFormat.QR_CODE, BarcodeFormat.DATA_MATRIX]);
-        hints.set(DecodeHintType.TRY_HARDER, true);
-        const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 120 });
+        const reader = await makeReader();
         if (cancelled || !video.current) return;
         controls.current = await reader.decodeFromConstraints(
           { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
@@ -86,7 +104,7 @@ export function BarcodeScanner({ onDetected, paused }: { onDetected: (code: stri
           <div className="scanline absolute inset-x-4 top-1/2 h-0.5 bg-sun" />
         </div>
       </div>
-      <p className="absolute inset-x-0 bottom-3 text-center text-sm font-semibold text-white drop-shadow">Point at a barcode or QR code</p>
+      <p className="absolute inset-x-0 bottom-3 text-center text-sm font-semibold text-white drop-shadow">Point at any barcode or QR code</p>
       {torchAvailable && (
         <button onClick={toggleTorch} className="absolute right-3 top-3 rounded-full bg-black/60 p-3 text-white" aria-label={torch ? "Turn flashlight off" : "Turn flashlight on"} aria-pressed={torch}>
           {torch ? <FlashlightOff className="size-5" /> : <Flashlight className="size-5" />}

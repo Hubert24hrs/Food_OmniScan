@@ -15,6 +15,8 @@ import 'label_screen.dart';
 import 'more_screens.dart';
 import 'recipe_screens.dart';
 import 'scan_screen.dart';
+import 'paywall_screen.dart';
+import '../core/theme.dart';
 
 typedef Feature = (IconData icon, String title, String subtitle, String? plan, Widget Function() screen);
 
@@ -67,7 +69,7 @@ List<(String, List<Feature>)> featureSections({required bool staff}) => [
         [
           (Icons.notifications_none, 'Alerts', 'Recalls, allergen and expiry alerts', null, () => const NotificationsScreen()),
           (Icons.tune, 'Notification settings', 'Choose what we tell you about', null, () => const NotificationSettingsScreen()),
-          (Icons.workspace_premium_outlined, 'Plans & usage', 'What is included in each plan', null, () => const PlansScreen()),
+          (Icons.workspace_premium_outlined, 'Plans & usage', 'Upgrade, compare plans, see your allowance', null, () => const PaywallScreen()),
           (Icons.lock_outline, 'Privacy & data', 'Export or delete your data', null, () => const PrivacyScreen()),
           if (staff) (Icons.admin_panel_settings_outlined, 'Admin & moderation', 'Products, moderation, content, users', null, () => const AdminScreen()),
         ],
@@ -98,8 +100,13 @@ class ExploreScreen extends StatelessWidget {
     final staff = app.me?['role'] == 'admin' || app.me?['role'] == 'moderator';
     var n = 0;
     return Scaffold(
-      appBar: AppBar(title: const Text('Explore'), bottom: const PreferredSize(preferredSize: Size.fromHeight(3), child: FreshStripe())),
+      appBar: AppBar(
+        title: const Text('Explore'),
+        actions: const [UpgradeChip()],
+        bottom: const PreferredSize(preferredSize: Size.fromHeight(3), child: FreshStripe()),
+      ),
       body: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 100), children: [
+        const UpgradeBanner(),
         Row(children: [
           Expanded(
             child: TextField(
@@ -119,17 +126,44 @@ class ExploreScreen extends StatelessWidget {
                 leading: IconTile(icon: f.$1, index: n++),
                 title: Row(children: [
                   Flexible(child: Text(f.$2, style: const TextStyle(fontWeight: FontWeight.w700))),
-                  if (f.$4 != null) ...[const SizedBox(width: 6), Chip(label: Text(f.$4!), visualDensity: VisualDensity.compact)],
+                  if (f.$4 != null) ...[const SizedBox(width: 6), PlanBadge(f.$4!, locked: app.isFree)],
                 ]),
                 subtitle: Text(f.$3),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => f.$5())),
+                trailing: Icon(f.$4 != null && app.isFree ? Icons.lock_outline : Icons.chevron_right),
+                onTap: () => openFeature(context, f.$4, f.$5),
               ),
             ),
         ],
       ]),
     );
   }
+}
+
+/// Opens a feature, or the plans first when it needs a plan the user doesn't have.
+void openFeature(BuildContext context, String? plan, Widget Function() screen) {
+  if (plan != null && context.read<AppState>().isFree) {
+    showPaywall(context, tier: plan.toLowerCase(), reason: '${plan == 'Family' ? 'Household sharing' : 'This feature'} is included with $plan.');
+    return;
+  }
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen()));
+}
+
+/// "PLUS" / "FAMILY" tag; red with a lock while the user is on the free plan.
+class PlanBadge extends StatelessWidget {
+  const PlanBadge(this.plan, {super.key, this.locked = false});
+  final String plan;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(color: locked ? Brand.tomato : Brand.greenSoft, borderRadius: BorderRadius.circular(6)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (locked) const Padding(padding: EdgeInsets.only(right: 3), child: Icon(Icons.lock, size: 11, color: Colors.white)),
+          Text(plan.toUpperCase(),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.4, color: locked ? Colors.white : Brand.green)),
+        ]),
+      );
 }
 
 /// Compact grid of the most-used features for the Home screen.
@@ -139,15 +173,16 @@ class QuickGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <(IconData, String, Widget Function())>[
-      (Icons.document_scanner_outlined, 'Scan label', () => const LabelScreen()),
-      (Icons.restaurant_menu, 'Recipes', () => const RecipesScreen()),
-      (Icons.calendar_month, 'Meal plan', () => const MealPlansScreen()),
-      (Icons.checklist, 'Lists', () => const ShoppingListsScreen()),
-      (Icons.kitchen, 'Pantry', () => const PantryScreen()),
-      (Icons.auto_awesome, 'Ask AI', () => const AssistantScreen()),
-      (Icons.notifications_none, 'Alerts', () => const NotificationsScreen()),
-      (Icons.favorite_border, 'Saved', () => const SavedScreen()),
+    final free = context.watch<AppState>().isFree;
+    final items = <(IconData, String, String?, Widget Function())>[
+      (Icons.document_scanner_outlined, 'Scan label', null, () => const LabelScreen()),
+      (Icons.restaurant_menu, 'Recipes', null, () => const RecipesScreen()),
+      (Icons.calendar_month, 'Meal plan', 'Plus', () => const MealPlansScreen()),
+      (Icons.checklist, 'Lists', null, () => const ShoppingListsScreen()),
+      (Icons.kitchen, 'Pantry', 'Plus', () => const PantryScreen()),
+      (Icons.auto_awesome, 'Ask AI', null, () => const AssistantScreen()),
+      (Icons.notifications_none, 'Alerts', null, () => const NotificationsScreen()),
+      (Icons.favorite_border, 'Saved', null, () => const SavedScreen()),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       GridView.count(
@@ -158,12 +193,20 @@ class QuickGrid extends StatelessWidget {
         crossAxisSpacing: 8,
         childAspectRatio: 0.85,
         children: [
-          for (final (i, (icon, label, screen)) in items.indexed)
+          for (final (i, (icon, label, plan, screen)) in items.indexed)
             InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen())),
+              onTap: () => openFeature(context, plan, screen),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                IconTile(icon: icon, index: i, size: 48),
+                Stack(clipBehavior: Clip.none, children: [
+                  IconTile(icon: icon, index: i, size: 48),
+                  if (plan != null && free)
+                    const Positioned(
+                      right: -4,
+                      top: -4,
+                      child: CircleAvatar(radius: 9, backgroundColor: Brand.tomato, child: Icon(Icons.lock, size: 11, color: Colors.white)),
+                    ),
+                ]),
                 const SizedBox(height: 6),
                 Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
               ]),

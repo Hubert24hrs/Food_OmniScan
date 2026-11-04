@@ -25,7 +25,7 @@ Most gaps are limited by data rather than code: retailer price feeds, West Afric
 
 | # | Feature | Status | Where | Plan |
 |---|---|---|---|---|
-| 1 | Barcode scanning | Done | W (ZXing), M (ML Kit). GTIN check-digit validation | Free |
+| 1 | Barcode scanning | Done | W (ZXing), M (ML Kit): every common format (EAN/UPC, ITF-14, Code 128/39/93, Codabar, QR, Data Matrix, PDF417, Aztec), from the camera or a photo. GS1 QR / Digital Link open the product; links, Wi-Fi, phone, email, SMS, map and contact codes get the matching action. GTIN check-digit validation | Free |
 | 2 | Ingredient label OCR | Done | W (Tesseract), M (ML Kit) on device; optional AI reading | Free; AI metered |
 | 3 | Nutrition label scanning | Done | US Nutrition Facts and EU tables parsed, with OCR digit correction | Free |
 | 4 | AI food recognition | Done | Gemini vision: packaged (front of pack) and unpackaged (meal) | AI photo credits |
@@ -199,7 +199,7 @@ Each kind of notification can be switched on or off on the profile page. The dai
 |---|---|---|---|
 | 156–160 | Dashboard, products (create/edit/hide), ingredients (create/edit), verification, versioned scoring | Done | W admin |
 | 161–163 | Research, lab reports, recalls | Done | |
-| 164–166 | Users and roles, subscriptions and entitlements, AI usage and cost | Done | |
+| 164–166 | Users and roles, subscriptions and entitlements, AI usage and cost | Done | Paywall: Go Premium in every main header, Home banner with the allowance closest to running out, plan card on Profile, lock badges on paid features, automatic plans screen when an allowance runs out or a paid feature is used, daily reminder for free users. Google Play Billing via RevenueCat on Android |
 | 167 | Analytics | Done | Scans per day, popular products, most-scanned missing barcodes, feature usage |
 | 168, 169 | Moderation, audit logs | Done | |
 | 170 | Content management | Done | Articles, recipe moderation, announcements |

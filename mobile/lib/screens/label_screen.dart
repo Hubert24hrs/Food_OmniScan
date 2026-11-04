@@ -7,6 +7,7 @@ import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/analysis_view.dart';
 import 'assistant_screen.dart' show assistantErrorText;
+import 'paywall_screen.dart';
 
 /// Photograph ingredient / nutrition labels, read them on-device with ML Kit,
 /// let the user correct the text, then analyze it server-side.
@@ -82,6 +83,7 @@ class _LabelScreenState extends State<LabelScreen> {
       }
     } on ApiException catch (e) {
       setState(() => error = assistantErrorText(e));
+      if (mounted) handlePlanError(context, e);
     } finally {
       if (mounted) setState(() => busy = false);
     }

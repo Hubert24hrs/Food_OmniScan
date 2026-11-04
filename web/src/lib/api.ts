@@ -4,6 +4,10 @@ export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:800
 export const API_ORIGIN = API_URL.replace(/\/api\/v1$/, "");
 const TOKEN_KEY = "omniscan.token";
 
+/** Fired on window when an action needs a paid plan or the monthly allowance is used up. */
+export const PAYWALL_EVENT = "omniscan:paywall";
+export type PaywallDetail = { code?: string; message?: string; required_tier?: string | null };
+
 export class ApiError extends Error {
   status: number;
   code?: string;
@@ -51,9 +55,10 @@ export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T
     headers["Content-Type"] = "application/json";
     body = JSON.stringify(opts.body);
   }
+  const method = opts.method || (body ? "POST" : "GET");
   let res: Response;
   try {
-    res = await fetch(url, { method: opts.method || (body ? "POST" : "GET"), headers, body, signal: opts.signal });
+    res = await fetch(url, { method, headers, body, signal: opts.signal });
   } catch (e) {
     if ((e as Error).name === "AbortError") throw e;
     throw new ApiError(0, "Can't reach Food omniScan. Check your connection and try again.", "network_error");
@@ -72,6 +77,10 @@ export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T
       message = o.message || (o.errors ? o.errors.map((e) => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join("; ") : message);
     }
     if (res.status === 401 && token) setToken(null);
+    // Something the person did (not a background load) hit a plan limit: send them to the plans.
+    if (res.status === 402 && method !== "GET" && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent<PaywallDetail>(PAYWALL_EVENT, { detail: { ...(d as PaywallDetail), message } }));
+    }
     throw new ApiError(res.status, message, code, d);
   }
   return data as T;

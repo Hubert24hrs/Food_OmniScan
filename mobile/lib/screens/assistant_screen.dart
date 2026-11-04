@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api.dart';
 import '../core/app_state.dart';
+import 'paywall_screen.dart';
 
 /// Nutrition assistant chat. Answers come from the API, which grounds Gemini on our own
 /// product data and cited sources. Conversations stay on the phone; the server doesn't store them.
@@ -57,12 +60,14 @@ class _AssistantScreenState extends State<AssistantScreen> {
       }) as Map<String, dynamic>;
       final sources = [for (final s in (r['sources'] as List? ?? [])) (s as Map)['key'] as String];
       setState(() => msgs.add(ChatMessage('assistant', r['answer'] as String? ?? '', sources: sources)));
+      unawaited(app.refreshUsage());
     } on ApiException catch (e) {
       setState(() {
         msgs.removeLast();
         q.text = question;
         error = assistantErrorText(e);
       });
+      if (mounted) handlePlanError(context, e);
     } finally {
       if (mounted) setState(() => busy = false);
       _scrollToEnd();
@@ -88,6 +93,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Nutrition assistant'), actions: [
+        const UpgradeChip(),
         PopupMenuButton<String>(
           tooltip: 'Answer language',
           initialValue: language,
