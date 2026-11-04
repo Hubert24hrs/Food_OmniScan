@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:food_omniscan/core/api.dart';
 import 'package:food_omniscan/core/app_state.dart';
 import 'package:food_omniscan/core/offline.dart';
+import 'package:food_omniscan/core/scan_codes.dart';
 import 'package:food_omniscan/core/theme.dart';
 import 'package:food_omniscan/screens/assistant_screen.dart';
 import 'package:food_omniscan/screens/diary_screen.dart';
@@ -275,5 +276,18 @@ void main() {
     await tester.pumpAndSettle(); // would time out if the loops were still running
     await tester.tap(find.byIcon(Icons.qr_code_scanner));
     expect(taps, 1);
+  });
+
+  test('scanner understands barcodes, GS1 QR codes, share links and other QR codes', () {
+    expect((classifyCode('3017620422003') as ProductCode).gtin, '3017620422003');
+    expect((classifyCode('https://id.gs1.org/01/09506000134352/10/ABC') as ProductCode).gtin, '09506000134352');
+    expect((classifyCode('https://brand.example/01/00049000000443?lot=7') as ProductCode).gtin, '00049000000443');
+    expect((classifyCode('(01)09506000134352(17)271231') as ProductCode).gtin, '09506000134352');
+    expect((classifyCode('http://192.168.100.8:3000/r/AbC123xyz_-9') as SharedReportCode).token, 'AbC123xyz_-9');
+    final link = classifyCode('http://192.168.100.8:8090/food-omniscan-debug.apk');
+    expect(link, isA<LinkCode>());
+    expect((link as LinkCode).uri.host, '192.168.100.8');
+    expect(classifyCode('WIFI:T:WPA;S:Home;P:secret;;'), isA<TextCode>());
+    expect(classifyCode('hello'), isA<TextCode>());
   });
 }

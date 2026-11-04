@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Flashlight, FlashlightOff, VideoOff } from "lucide-react";
 import type { IScannerControls } from "@zxing/browser";
 
-/** Live camera barcode scanner (EAN-13, EAN-8, UPC-A, UPC-E) using ZXing, entirely on-device. */
+/** Live camera scanner for product barcodes (EAN-13/8, UPC-A/E) and QR / Data Matrix codes, using ZXing on-device. */
 export function BarcodeScanner({ onDetected, paused }: { onDetected: (code: string) => void; paused?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const controls = useRef<IScannerControls | null>(null);
@@ -21,7 +21,7 @@ export function BarcodeScanner({ onDetected, paused }: { onDetected: (code: stri
         if (!navigator.mediaDevices?.getUserMedia) throw new Error("This browser can't access the camera. Enter the barcode below.");
         const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([import("@zxing/browser"), import("@zxing/library")]);
         const hints = new Map();
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E]);
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E, BarcodeFormat.QR_CODE, BarcodeFormat.DATA_MATRIX]);
         hints.set(DecodeHintType.TRY_HARDER, true);
         const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 120 });
         if (cancelled || !video.current) return;
@@ -82,11 +82,11 @@ export function BarcodeScanner({ onDetected, paused }: { onDetected: (code: stri
     <div className="relative overflow-hidden rounded-3xl bg-black">
       <video ref={video} className="aspect-[4/3] w-full object-cover" muted playsInline aria-label="Camera preview for barcode scanning" />
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
-        <div className="relative h-32 w-4/5 max-w-sm rounded-2xl border-4 border-accent/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
-          <div className="scanline absolute inset-x-4 top-1/2 h-0.5 bg-accent" />
+        <div className="relative h-44 w-4/5 max-w-sm rounded-2xl border-4 border-brand shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
+          <div className="scanline absolute inset-x-4 top-1/2 h-0.5 bg-sun" />
         </div>
       </div>
-      <p className="absolute inset-x-0 bottom-3 text-center text-sm font-semibold text-white drop-shadow">Point at the barcode</p>
+      <p className="absolute inset-x-0 bottom-3 text-center text-sm font-semibold text-white drop-shadow">Point at a barcode or QR code</p>
       {torchAvailable && (
         <button onClick={toggleTorch} className="absolute right-3 top-3 rounded-full bg-black/60 p-3 text-white" aria-label={torch ? "Turn flashlight off" : "Turn flashlight on"} aria-pressed={torch}>
           {torch ? <FlashlightOff className="size-5" /> : <Flashlight className="size-5" />}

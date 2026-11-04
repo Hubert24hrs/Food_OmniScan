@@ -10,7 +10,14 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakart
 export const metadata: Metadata = {
   title: { default: "Food omniScan: Know what's inside", template: "%s · Food omniScan" },
   description: "Scan packaged food to see a transparent health score, ingredient explanations, allergen alerts and healthier alternatives. US FDA standards.",
-  icons: { icon: "/logo.svg" },
+  icons: {
+    icon: [
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   applicationName: "Food omniScan",
 };
 

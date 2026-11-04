@@ -146,17 +146,24 @@ class FreshStripe extends StatelessWidget {
       );
 }
 
-/// "Food omniScan" wordmark in brand colours.
+/// App icon + "Food omniScan" wordmark in brand colours.
 class Wordmark extends StatelessWidget {
   const Wordmark({super.key});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Text.rich(TextSpan(children: [
-      TextSpan(text: 'Food ', style: TextStyle(color: cs.onSurface)),
-      TextSpan(text: 'omni', style: TextStyle(color: cs.primary)),
-      TextSpan(text: 'Scan', style: TextStyle(color: cs.secondary)),
-    ]), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800));
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset('assets/brand/app_icon_256.png', width: 32, height: 32, semanticLabel: 'Food omniScan logo'),
+      ),
+      const SizedBox(width: 10),
+      Text.rich(TextSpan(children: [
+        TextSpan(text: 'Food ', style: TextStyle(color: cs.onSurface)),
+        TextSpan(text: 'omni', style: TextStyle(color: cs.primary)),
+        TextSpan(text: 'Scan', style: TextStyle(color: cs.secondary)),
+      ]), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+    ]);
   }
 }
