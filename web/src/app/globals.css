@@ -1,0 +1,303 @@
+@import "tailwindcss";
+
+/* Food omniScan design tokens: bright "fresh market" palette. White surfaces, fresh green primary,
+   tomato red / orange / sunny yellow accents, flat colour, crisp borders.
+   Light/dark via prefers-color-scheme or [data-theme]. Text colours keep WCAG AA contrast. */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f3f7f1;
+  --border: #e3e9df;
+  --text: #13201a;
+  --text-muted: #56635b;
+  --brand: #15803d;
+  --brand-strong: #166534;
+  --brand-soft: #dcfce7;
+  --accent: #dc2626;
+  --accent-soft: #fee2e2;
+  --orange: #ea580c;
+  --orange-soft: #ffedd5;
+  --sun: #eab308;
+  --sun-soft: #fef9c3;
+  --good: #15803d;
+  --good-soft: #dcfce7;
+  --ok: #4d7c0f;
+  --ok-soft: #ecfccb;
+  --warn: #c2410c;
+  --warn-soft: #ffedd5;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --grey: #64748b;
+  --grey-soft: #eef1f4;
+  --ring: rgba(21, 128, 61, 0.45);
+  --on-brand: #ffffff;
+  --shadow: 0 1px 2px rgba(19, 32, 26, 0.05), 0 4px 14px rgba(19, 32, 26, 0.05);
+  --shadow-hover: 0 2px 4px rgba(19, 32, 26, 0.06), 0 12px 28px rgba(19, 32, 26, 0.09);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1310;
+    --surface: #141c17;
+    --surface-2: #1b251f;
+    --border: #273329;
+    --text: #f1f7f2;
+    --text-muted: #9fb0a5;
+    --brand: #4ade80;
+    --brand-strong: #86efac;
+    --brand-soft: #143420;
+    --accent: #f87171;
+    --accent-soft: #3a1515;
+    --orange: #fb923c;
+    --orange-soft: #3a210f;
+    --sun: #facc15;
+    --sun-soft: #33290a;
+    --good: #4ade80;
+    --good-soft: #143420;
+    --ok: #a3e635;
+    --ok-soft: #22300c;
+    --warn: #fb923c;
+    --warn-soft: #3a210f;
+    --bad: #f87171;
+    --bad-soft: #3a1515;
+    --grey: #94a3b8;
+    --grey-soft: #1e2621;
+    --ring: rgba(74, 222, 128, 0.5);
+    --on-brand: #052e16;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0d1310;
+  --surface: #141c17;
+  --surface-2: #1b251f;
+  --border: #273329;
+  --text: #f1f7f2;
+  --text-muted: #9fb0a5;
+  --brand: #4ade80;
+  --brand-strong: #86efac;
+  --brand-soft: #143420;
+  --accent: #f87171;
+  --accent-soft: #3a1515;
+  --orange: #fb923c;
+  --orange-soft: #3a210f;
+  --sun: #facc15;
+  --sun-soft: #33290a;
+  --good: #4ade80;
+  --good-soft: #143420;
+  --ok: #a3e635;
+  --ok-soft: #22300c;
+  --warn: #fb923c;
+  --warn-soft: #3a210f;
+  --bad: #f87171;
+  --bad-soft: #3a1515;
+  --grey: #94a3b8;
+  --grey-soft: #1e2621;
+  --ring: rgba(74, 222, 128, 0.5);
+  --on-brand: #052e16;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-orange: var(--orange);
+  --color-orange-soft: var(--orange-soft);
+  --color-sun: var(--sun);
+  --color-sun-soft: var(--sun-soft);
+  --color-on-brand: var(--on-brand);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-grey: var(--grey);
+  --color-grey-soft: var(--grey-soft);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+a.card,
+button.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+a.card:hover,
+button.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--brand);
+}
+
+/* Solid primary button / pill */
+.btn-brand {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.btn-brand:hover {
+  background: var(--brand-strong);
+}
+
+/* Upgrade / buy buttons: tomato red so the plans are easy to find. */
+.btn-accent {
+  background: #dc2626;
+  color: #fff;
+}
+.btn-accent:hover {
+  background: #b91c1c;
+}
+svg.lucide-crown {
+  animation: nudge 2.6s ease-in-out infinite;
+}
+
+/* Thin tri-colour accent rule (green / orange / red), like a produce label stripe. */
+.fresh-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand) 0 50%, var(--sun) 50% 70%, var(--orange) 70% 85%, var(--accent) 85% 100%);
+}
+
+.focus-ring:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--brand);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.75rem;
+}
+
+/* ---------------------------------------------------------------- animated icons
+   Lucide icons render as <svg class="lucide lucide-<name>">. Every icon inside a link or button
+   pops on hover; a few icons have a gentle idle animation. All of it stops with reduced motion. */
+svg.lucide {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+a:hover svg.lucide,
+button:hover svg.lucide {
+  animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+svg.lucide-sparkles,
+svg.lucide-sparkle {
+  animation: twinkle 2.8s ease-in-out infinite;
+}
+svg.lucide-scan-line,
+svg.lucide-scan-barcode {
+  animation: nudge 2.6s ease-in-out infinite;
+}
+a:hover svg.lucide-heart,
+button:hover svg.lucide-heart {
+  animation: heartbeat 0.9s ease-in-out infinite;
+  color: var(--accent);
+}
+a:hover svg.lucide-bell,
+button:hover svg.lucide-bell {
+  animation: ring 0.9s ease-in-out;
+}
+svg.lucide-droplets {
+  animation: drip 3s ease-in-out infinite;
+}
+svg.lucide-loader-circle,
+svg.lucide-loader-2 {
+  animation: spin 0.9s linear infinite;
+}
+.icon-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Animated logo pieces */
+.logo-beam {
+  animation: beam 3s ease-in-out infinite;
+}
+.logo-dot {
+  animation: bounce-dot 3s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+@keyframes scanline {
+  0%, 100% { transform: translateY(-40%); opacity: 0.4; }
+  50% { transform: translateY(40%); opacity: 1; }
+}
+.scanline {
+  animation: scanline 2.2s ease-in-out infinite;
+}
+
+@keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes twinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  40% { transform: scale(1.2) rotate(15deg); }
+  60% { transform: scale(0.95) rotate(-6deg); }
+}
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.18) rotate(-6deg); } 100% { transform: scale(1); } }
+@keyframes nudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes heartbeat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.22); } 60% { transform: scale(0.96); } }
+@keyframes ring { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-13deg); } 60% { transform: rotate(7deg); } 80% { transform: rotate(-3deg); } }
+@keyframes drip { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
+@keyframes beam { 0%, 100% { transform: translateY(-9px); opacity: 0; } 15%, 85% { opacity: 0.9; } 50% { transform: translateY(9px); } }
+@keyframes bounce-dot { 0%, 70%, 100% { transform: translateY(0); } 80% { transform: translateY(-3px); } 90% { transform: translateY(0) scaleY(0.92); } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.rise {
+  animation: rise 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

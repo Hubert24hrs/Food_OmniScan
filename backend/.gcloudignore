@@ -1,0 +1,16 @@
+# Files never uploaded to Cloud Build (secrets, local data, dev tooling).
+.gcloudignore
+.git
+.venv
+__pycache__
+*.pyc
+*.db
+*.db.*
+.env
+.env.*
+uploads
+tests
+scripts
+.pytest_cache
+.ruff_cache
+requirements-dev.txt
