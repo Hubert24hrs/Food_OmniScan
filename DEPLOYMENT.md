@@ -28,6 +28,35 @@ cp backend/.env.example backend/.env    # fill JWT_SECRET
 docker compose up --build               # API :8000 (runs alembic upgrade head), web :3000, Postgres
 ```
 
+## Live setup (free tier): Google Cloud Run + Neon + GitHub Pages
+
+This is what runs in production today. Everything stays inside free tiers; a $1 budget alert (resources labelled
+`app=food-omniscan`) emails the billing admins if anything starts to cost money.
+
+| Piece | Where |
+|---|---|
+| API | Cloud Run service `food-omniscan-api`, project `grocery-companion-hub`, region `us-central1`, scales to zero, max 2 instances. URL: https://food-omniscan-api-985772575655.us-central1.run.app (`/health`, `/api/v1/...`) |
+| Database | Neon free Postgres, project `food-omniscan`, AWS US East 2 (Ohio), direct (unpooled) connection |
+| Photo uploads | Cloud Storage bucket `gs://food-omniscan-uploads-hub` mounted at `/app/uploads` |
+| Images | Artifact Registry `us-central1-docker.pkg.dev/grocery-companion-hub/food-omniscan/api` (keeps the latest 2) |
+| Secrets | Secret Manager: `food-omniscan-database-url`, `-jwt-secret`, `-gemini-api-key`, `-revenuecat-webhook-auth`; read by service account `food-omniscan-api@grocery-companion-hub.iam.gserviceaccount.com` |
+| Public pages | GitHub Pages: https://hubert24hrs.github.io/Food_OmniScan/ (privacy, terms, account deletion), built from `site/` |
+
+**Deploy a new version** (run from PowerShell; Git Bash rewrites `/app/...` paths):
+
+```powershell
+cd backend
+$tag = git rev-parse --short HEAD
+gcloud builds submit . --project grocery-companion-hub --region us-central1 --tag us-central1-docker.pkg.dev/grocery-companion-hub/food-omniscan/api:$tag
+gcloud run deploy food-omniscan-api --project grocery-companion-hub --region us-central1 --image us-central1-docker.pkg.dev/grocery-companion-hub/food-omniscan/api:$tag --quiet
+```
+
+Migrations run automatically when a new revision starts. The first request after the service has been idle takes a
+few seconds (scale from zero plus Neon waking up). Rotate a secret with
+`gcloud secrets versions add food-omniscan-<name> --data-file=-` and redeploy.
+
+**Store build:** `flutter build appbundle --release --dart-define=API_URL=https://food-omniscan-api-985772575655.us-central1.run.app/api/v1 --dart-define=WEB_URL=https://hubert24hrs.github.io/Food_OmniScan --dart-define=REVENUECAT_GOOGLE_KEY=goog_...`
+
 ## Quickest low-cost launch: Railway (about $5–10 a month)
 One Railway project runs the API, the website and PostgreSQL from this GitHub repo, with free HTTPS addresses
 (`*.up.railway.app`) until you add your own domain. `backend/railway.json` and `web/railway.json` set the build and health checks.
