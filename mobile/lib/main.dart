@@ -7,6 +7,7 @@ import 'screens/account_screens.dart';
 import 'screens/diary_screen.dart';
 import 'screens/home_screens.dart';
 import 'screens/scan_screen.dart';
+import 'widgets/fresh.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,20 +52,20 @@ class _ShellState extends State<Shell> {
     return Scaffold(
       body: IndexedStack(index: index, children: [for (var i = 0; i < pages.length; i++) i == index || i != 2 ? pages[i] : const SizedBox()]),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton.large(
-        tooltip: 'Scan',
-        onPressed: () => setState(() => index = 2),
-        child: const Icon(Icons.qr_code_scanner, size: 36),
+      floatingActionButton: Semantics(
+        button: true,
+        label: 'Scan',
+        child: PulsingScanButton(onPressed: () => setState(() => index = 2)),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => setState(() => index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Discover'),
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.search), selectedIcon: Icon(Icons.manage_search), label: 'Discover'),
           NavigationDestination(icon: SizedBox(width: 24), label: 'Scan'),
-          NavigationDestination(icon: Icon(Icons.edit_note), label: 'Diary'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.edit_note), selectedIcon: Icon(Icons.edit_note_rounded), label: 'Diary'),
+          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
         ],
       ),
     );

@@ -26,7 +26,7 @@ export default function AdminPage() {
     <Page title="Admin console" subtitle={`Signed in as ${me.role}. Every action is audit-logged.`}>
       <div className="mb-4 flex flex-wrap gap-2" role="tablist">
         {visible.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${tab === t ? "bg-brand text-white dark:text-[#06201d]" : "border border-line"}`}>{t}</button>
+          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${tab === t ? "btn-brand" : "border border-line"}`}>{t}</button>
         ))}
       </div>
       {tab === "Overview" && <Overview />}

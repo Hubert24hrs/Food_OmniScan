@@ -12,7 +12,7 @@ export function ScoreRing({ score, color, label, size = 132 }: { score: number |
     <div className="relative grid place-items-center" style={{ width: size, height: size }} role="img" aria-label={score === null ? `Score: ${label}` : `Score ${score} out of 100, ${label}`}>
       <svg viewBox="0 0 120 120" width={size} height={size} className="-rotate-90">
         <circle cx="60" cy="60" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="12" />
-        <circle cx="60" cy="60" r={r} fill="none" stroke={stroke} strokeWidth="12" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} style={{ transition: "stroke-dashoffset 700ms ease" }} />
+        <circle cx="60" cy="60" r={r} fill="none" stroke={stroke} strokeWidth="12" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} style={{ transition: "stroke-dashoffset 900ms cubic-bezier(.34,1.56,.64,1)" }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-display text-4xl font-extrabold tabular-nums" style={{ color: stroke }}>

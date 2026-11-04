@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CalendarDays, ChefHat, FlaskConical, Globe2, Home, Package, Trophy, Wallet } from "lucide-react";
-import { Badge, Page } from "@/components/ui";
+import { Badge, IconTile, Page } from "@/components/ui";
 
 const tiles = [
   { href: "/recipes", title: "Recipes", body: "Nigerian, US and European recipes, checked against your allergies. AI recipes on paid plans.", icon: ChefHat },
@@ -20,10 +21,13 @@ const tiles = [
 export default function ExplorePage() {
   return (
     <Page title="Explore" subtitle="Everything beyond the scanner: cook, plan, shop and learn.">
+      <div className="card rise mb-5 overflow-hidden p-2">
+        <Image src="/brand/kitchen.svg" alt="" width={1280} height={832} unoptimized priority className="mx-auto h-44 w-auto rounded-xl object-contain sm:h-60" />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {tiles.map((t) => (
-          <Link key={t.href} href={t.href} className="card flex gap-3 p-4 transition hover:border-brand">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand"><t.icon className="size-5" aria-hidden /></span>
+        {tiles.map((t, i) => (
+          <Link key={t.href} href={t.href} className="card rise flex gap-3 p-4" style={{ animationDelay: `${i * 60}ms` }}>
+            <IconTile index={i}><t.icon className="size-5" aria-hidden /></IconTile>
             <span className="min-w-0">
               <span className="flex items-center gap-2 font-display font-bold">{t.title}{t.plan && <Badge tone="brand">{t.plan}</Badge>}</span>
               <span className="mt-0.5 block text-sm text-muted">{t.body}</span>

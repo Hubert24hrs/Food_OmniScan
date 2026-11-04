@@ -6,13 +6,13 @@ import type { ComponentProps, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 const variants: Record<Variant, string> = {
-  primary: "bg-brand text-white hover:bg-brand-strong dark:text-[#06201d]",
-  secondary: "bg-surface border border-line text-ink hover:bg-surface-2",
+  primary: "btn-brand ",
+  secondary: "bg-surface border border-line text-ink hover:border-brand hover:text-brand",
   ghost: "text-ink hover:bg-surface-2",
   danger: "bg-bad text-white hover:opacity-90",
 };
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xl px-4 min-h-11 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-xl px-4 min-h-11 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0";
 
 export function Button({ variant = "primary", loading, children, className = "", ...p }: ComponentProps<"button"> & { variant?: Variant; loading?: boolean }) {
   return (
@@ -47,6 +47,9 @@ const tones = {
   red: "bg-bad-soft text-bad",
   grey: "bg-grey-soft text-grey",
   brand: "bg-brand-soft text-brand-strong dark:text-brand",
+  tomato: "bg-accent-soft text-accent",
+  orange: "bg-orange-soft text-orange",
+  sun: "bg-sun-soft text-[#a16207] dark:text-sun",
 };
 export function Badge({ tone = "grey", children, className = "" }: { tone?: keyof typeof tones; children: ReactNode; className?: string }) {
   return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[tone]} ${className}`}>{children}</span>;
@@ -67,7 +70,7 @@ export function Spinner({ label = "Loading" }: { label?: string }) {
 export function EmptyState({ title, body, action, icon }: { title: string; body?: string; action?: ReactNode; icon?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-      <div className="rounded-full bg-surface-2 p-3 text-muted">{icon || <Inbox className="size-6" aria-hidden />}</div>
+      <div className="icon-float rounded-full bg-brand-soft p-3 text-brand">{icon || <Inbox className="size-6" aria-hidden />}</div>
       <p className="font-display text-base font-bold">{title}</p>
       {body && <p className="max-w-sm text-sm text-muted">{body}</p>}
       {action}
@@ -128,7 +131,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export const inputCls =
-  "w-full rounded-xl border border-line bg-surface px-3 min-h-11 text-sm text-ink placeholder:text-muted";
+  "w-full rounded-xl border border-line bg-surface px-3 min-h-11 text-sm text-ink placeholder:text-muted transition-colors focus:shadow-glow";
 
 export function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
@@ -136,7 +139,7 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`min-h-10 rounded-full border px-3.5 text-sm font-medium transition ${active ? "border-brand bg-brand-soft text-brand-strong dark:text-brand" : "border-line bg-surface text-ink hover:bg-surface-2"}`}
+      className={`min-h-10 rounded-full border px-3.5 text-sm font-medium transition-all ${active ? "border-transparent btn-brand" : "border-line bg-surface text-ink hover:border-brand hover:text-brand"}`}
     >
       {children}
     </button>
@@ -157,5 +160,25 @@ export function Page({ title, subtitle, children, actions }: { title?: string; s
       )}
       {children}
     </div>
+  );
+}
+
+// Fresh, flat tile colours (soft background + strong icon colour), cycled so neighbours differ.
+const TILE_COLOURS = [
+  "bg-brand-soft text-brand",
+  "bg-accent-soft text-accent",
+  "bg-orange-soft text-orange",
+  "bg-sun-soft text-[#a16207] dark:text-sun",
+  "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+  "bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300",
+];
+
+/** Colourful tile for an icon; `index` picks the colour so neighbouring tiles differ. */
+export function IconTile({ index = 0, size = "md", children }: { index?: number; size?: "sm" | "md" | "lg"; children: ReactNode }) {
+  const dim = size === "sm" ? "size-9 rounded-lg" : size === "lg" ? "size-14 rounded-2xl" : "size-11 rounded-xl";
+  return (
+    <span className={`icon-float grid shrink-0 place-items-center ${dim} ${TILE_COLOURS[index % TILE_COLOURS.length]}`} style={{ animationDelay: `${-index * 0.7}s` }}>
+      {children}
+    </span>
   );
 }

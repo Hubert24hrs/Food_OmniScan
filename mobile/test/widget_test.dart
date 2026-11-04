@@ -10,6 +10,7 @@ import 'package:food_omniscan/screens/assistant_screen.dart';
 import 'package:food_omniscan/screens/diary_screen.dart';
 import 'package:food_omniscan/screens/explore_screens.dart';
 import 'package:food_omniscan/widgets/common.dart';
+import 'package:food_omniscan/widgets/fresh.dart';
 import 'package:food_omniscan/widgets/analysis_view.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -247,5 +248,18 @@ void main() {
     for (final t in ['Recipes', 'Meal planner', 'Pantry', 'Grocery budget', 'Category rankings', 'Nigerian foods', 'Food safety research', 'Learn']) {
       expect(find.text(t), findsOneWidget);
     }
+  });
+
+  testWidgets('animated icons stop when the system asks for reduced motion', (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: Scaffold(body: Column(children: [const IconTile(icon: Icons.kitchen), PulsingScanButton(onPressed: () => taps++)])),
+      ),
+    ));
+    await tester.pumpAndSettle(); // would time out if the loops were still running
+    await tester.tap(find.byIcon(Icons.qr_code_scanner));
+    expect(taps, 1);
   });
 }

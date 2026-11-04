@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Bell, BookOpen, ChefHat, Compass, GitCompare, ListChecks, MessageCircle, ScanLine, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useApi } from "@/lib/useApi";
-import { Badge, Card, EmptyState, LinkButton, Page, SectionTitle, Skeleton } from "@/components/ui";
+import { Badge, Card, EmptyState, IconTile, LinkButton, Page, SectionTitle, Skeleton } from "@/components/ui";
 import { ProductCard } from "@/components/ProductCard";
 import { relDays } from "@/lib/format";
 import type { ProductSummary } from "@/lib/types";
@@ -25,19 +26,22 @@ function Dashboard({ name, profileName }: { name: string; profileName?: string }
   const restrictions = (activeProfile?.allergens.length || 0) + (activeProfile?.diets.length || 0) + (activeProfile?.avoid.length || 0);
   return (
     <Page>
-      <section className="card relative overflow-hidden bg-gradient-to-br from-brand to-brand-strong p-6 text-white dark:text-[#06201d]">
-        <p className="text-sm font-semibold opacity-90">Hi {name} 👋</p>
-        <h1 className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">What are you eating today?</h1>
-        <p className="mt-1 max-w-md text-sm opacity-90">Scan a barcode or photograph a label. Checking for {profileName ? <b>{profileName}</b> : "you"}.</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link href="/scan" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-brand-strong">
-            <ScanLine className="size-5" aria-hidden /> Scan a product
-          </Link>
-          <Link href="/discover" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white/15 px-4 text-sm font-semibold ring-1 ring-white/40">
-            <Search className="size-4" aria-hidden /> Search
-          </Link>
+      <section className="card rise relative overflow-hidden p-6 sm:p-8">
+        <Image src="/brand/hero-fresh.webp" alt="" fill priority sizes="(min-width: 1024px) 1024px, 100vw" className="object-contain object-right opacity-30 sm:opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/90 to-transparent" aria-hidden />
+        <div className="relative max-w-md">
+          <p className="text-sm font-semibold text-brand">Hi {name} 👋</p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">What are you eating today?</h1>
+          <p className="mt-2 text-sm text-muted">Scan a barcode or photograph a label. Checking for {profileName ? <b className="text-ink">{profileName}</b> : "you"}.</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link href="/scan" className="btn-brand inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-sm font-bold">
+              <ScanLine className="size-5" aria-hidden /> Scan a product
+            </Link>
+            <Link href="/discover" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-semibold hover:border-brand hover:text-brand">
+              <Search className="size-4" aria-hidden /> Search
+            </Link>
+          </div>
         </div>
-        <ScanLine className="absolute -right-6 -top-6 size-40 opacity-10" aria-hidden />
       </section>
 
       {restrictions === 0 && (
@@ -75,9 +79,9 @@ function Dashboard({ name, profileName }: { name: string; profileName?: string }
               { href: "/notifications", icon: Bell, label: "Alerts", badge: notes.data?.length },
               { href: "/recipes", icon: ChefHat, label: "Recipes" },
               { href: "/explore", icon: Compass, label: "More" },
-            ].map((x) => (
-              <Link key={x.href} href={x.href} className="card flex min-h-20 flex-col justify-between p-3 hover:border-brand/50">
-                <x.icon className="size-5 text-brand" aria-hidden />
+            ].map((x, i) => (
+              <Link key={x.href} href={x.href} className="card flex min-h-24 flex-col justify-between gap-2 p-3">
+                <IconTile index={i} size="sm"><x.icon className="size-5" aria-hidden /></IconTile>
                 <span className="flex items-center justify-between text-sm font-semibold">
                   {x.label} {x.badge ? <Badge tone="red">{x.badge}</Badge> : null}
                 </span>
@@ -93,15 +97,15 @@ function Dashboard({ name, profileName }: { name: string; profileName?: string }
 function Landing() {
   return (
     <Page>
-      <section className="grid items-center gap-8 py-6 md:grid-cols-2 md:py-14">
+      <section className="rise grid items-center gap-8 py-6 md:grid-cols-[1.1fr_1fr] md:py-12">
         <div>
           <Badge tone="brand">
             <Sparkles className="size-3.5" aria-hidden /> Built on FDA nutrition standards
           </Badge>
-          <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+          <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
             Know what&apos;s inside.
             <br />
-            <span className="text-brand">Understand what you eat.</span>
+            <span className="text-brand">Understand</span> what <span className="text-accent">you eat.</span>
           </h1>
           <p className="mt-4 max-w-lg text-lg text-muted">
             Scan any packaged food for a transparent health score, plain-English ingredient explanations, allergen alerts for your whole family, and healthier swaps.
@@ -116,7 +120,9 @@ function Landing() {
           </div>
           <p className="mt-3 text-xs text-muted">No account needed to scan. Data from Open Food Facts and USDA FoodData Central.</p>
         </div>
-        <div className="card mx-auto w-full max-w-sm p-5">
+        <div className="relative">
+          <Image src="/brand/hero-plate.webp" alt="" width={1080} height={1389} priority className="icon-float mx-auto w-full max-w-sm" />
+          <div className="card mt-4 p-4 md:absolute md:-bottom-4 md:left-0 md:mt-0 md:w-72">
           <div className="flex items-center gap-3">
             <LogoMark size={40} />
             <div>
@@ -137,16 +143,17 @@ function Landing() {
               </li>
             ))}
           </ul>
+          </div>
         </div>
       </section>
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="mt-6 grid gap-3 sm:grid-cols-3">
         {[
           { icon: ShieldCheck, t: "Allergen-first", b: "US Big 9 and EU 14 allergens with contains / may contain / unknown. A good score never hides an allergen alert." },
           { icon: BookOpen, t: "Transparent science", b: "FDA Daily Values, regulatory findings and peer-reviewed sources, with clear evidence levels. No invented results." },
           { icon: Users, t: "For the whole family", b: "Profiles for every eater, with vegan, halal screening, keto, low-sodium and custom avoid lists." },
-        ].map((f) => (
+        ].map((f, i) => (
           <Card key={f.t}>
-            <f.icon className="size-6 text-brand" aria-hidden />
+            <IconTile index={i}><f.icon className="size-6" aria-hidden /></IconTile>
             <p className="mt-2 font-display font-bold">{f.t}</p>
             <p className="mt-1 text-sm text-muted">{f.b}</p>
           </Card>

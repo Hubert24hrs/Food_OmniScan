@@ -43,7 +43,7 @@ export default function SubscriptionPage() {
     <Page title="Plans" subtitle="Scanning, scores, allergen alerts and food-safety information are free forever. Upgrade for AI, tracking, planning and family features.">
       <div className="mb-4 inline-flex rounded-2xl border border-line bg-surface p-1">
         {(["month", "year"] as const).map((i) => (
-          <button key={i} onClick={() => setBilling(i)} aria-pressed={interval === i} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${interval === i ? "bg-brand text-white dark:text-[#06201d]" : "text-muted"}`}>
+          <button key={i} onClick={() => setBilling(i)} aria-pressed={interval === i} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${interval === i ? "btn-brand" : "text-muted"}`}>
             {i === "month" ? "Monthly" : "Annual (save ~17%)"}
           </button>
         ))}

@@ -30,16 +30,16 @@ function DesktopNav() {
           key={n.href}
           href={n.href}
           aria-current={isActive(n.href) ? "page" : undefined}
-          className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold ${n.primary ? "bg-brand text-white dark:text-[#06201d]" : isActive(n.href) ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"}`}
+          className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${n.primary ? "btn-brand hover:brightness-110" : isActive(n.href) ? "bg-brand-soft text-brand" : "text-muted hover:bg-brand-soft hover:text-brand"}`}
         >
           <n.icon className="size-4" aria-hidden /> {n.label}
         </Link>
       ))}
-      <Link href="/explore" className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold ${isActive("/explore") ? "bg-surface-2" : "text-muted hover:text-ink"}`}>
+      <Link href="/explore" className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${isActive("/explore") ? "bg-brand-soft text-brand" : "text-muted hover:bg-brand-soft hover:text-brand"}`}>
         <Compass className="size-4" aria-hidden /> Explore
       </Link>
       {me && (me.role === "admin" || me.role === "moderator") && (
-        <Link href="/admin" className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted hover:text-ink">
+        <Link href="/admin" className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted hover:bg-brand-soft hover:text-brand">
           <Shield className="size-4" aria-hidden /> Admin
         </Link>
       )}
@@ -57,10 +57,10 @@ function MobileNav() {
             <Link
               href={n.href}
               aria-current={isActive(n.href) ? "page" : undefined}
-              className={n.primary ? "-mt-7 flex flex-col items-center gap-1 text-xs font-semibold text-brand" : `flex min-w-14 flex-col items-center gap-1 py-1 text-xs font-semibold ${isActive(n.href) ? "text-brand" : "text-muted"}`}
+              className={n.primary ? "-mt-7 flex flex-col items-center gap-1 text-xs font-semibold text-brand" : `flex min-w-14 flex-col items-center gap-1 py-1 text-xs font-semibold transition-colors ${isActive(n.href) ? "icon-float text-brand" : "text-muted hover:text-brand"}`}
             >
               {n.primary ? (
-                <span className="grid size-14 place-items-center rounded-2xl bg-brand text-white shadow-lg ring-4 ring-bg dark:text-[#06201d]">
+                <span className="grid size-14 place-items-center rounded-2xl btn-brand ring-4 ring-bg">
                   <n.icon className="size-7" aria-hidden />
                 </span>
               ) : (
@@ -94,7 +94,7 @@ function AccountControl() {
       </select>
     );
   return (
-    <Link href="/profile" className="hidden rounded-full bg-brand-soft px-3 py-1.5 text-sm font-semibold text-brand-strong sm:block dark:text-brand">
+    <Link href="/profile" className="border border-line hidden rounded-full px-3 py-1.5 text-sm font-semibold text-brand sm:block">
       {me.display_name || me.email.split("@")[0]}
     </Link>
   );
@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
           <Link href="/" aria-label="Food omniScan home">
             <Logo />
@@ -116,6 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Suspense>
           <AccountControl />
         </div>
+        <div className="fresh-stripe" aria-hidden />
       </header>
       <main id="main">{children}</main>
       <Suspense fallback={null}>

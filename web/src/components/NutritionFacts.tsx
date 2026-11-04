@@ -37,11 +37,11 @@ export function NutritionFacts({ product }: { product: Product }) {
     <div>
       <div className="mb-3 inline-flex rounded-xl border border-line p-1 text-sm" role="tablist" aria-label="Nutrition basis">
         {serving && (
-          <button role="tab" aria-selected={mode === "serving"} onClick={() => setMode("serving")} className={`rounded-lg px-3 py-1.5 font-semibold ${mode === "serving" ? "bg-brand text-white dark:text-[#06201d]" : "text-muted"}`}>
+          <button role="tab" aria-selected={mode === "serving"} onClick={() => setMode("serving")} className={`rounded-lg px-3 py-1.5 font-semibold ${mode === "serving" ? "btn-brand" : "text-muted"}`}>
             Per serving
           </button>
         )}
-        <button role="tab" aria-selected={mode === "100"} onClick={() => setMode("100")} className={`rounded-lg px-3 py-1.5 font-semibold ${mode === "100" ? "bg-brand text-white dark:text-[#06201d]" : "text-muted"}`}>
+        <button role="tab" aria-selected={mode === "100"} onClick={() => setMode("100")} className={`rounded-lg px-3 py-1.5 font-semibold ${mode === "100" ? "btn-brand" : "text-muted"}`}>
           Per 100 {unit}
         </button>
       </div>

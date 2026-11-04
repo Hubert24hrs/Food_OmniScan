@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Barcode, Camera, CloudOff, Keyboard } from "lucide-react";
@@ -56,9 +57,9 @@ export default function ScanPage() {
       )}
       {toast && <p className="mb-3 rounded-xl bg-good-soft p-3 text-sm text-good" role="status">{toast}</p>}
 
-      <div className="mb-4 inline-flex rounded-2xl border border-line bg-surface p-1" role="tablist">
+      <div className="mb-4 inline-flex bg-surface rounded-2xl border border-line p-1" role="tablist">
         {([["camera", Barcode, "Camera"], ["manual", Keyboard, "Enter code"]] as const).map(([m, Icon, label]) => (
-          <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={`flex min-h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold ${mode === m ? "bg-brand text-white dark:text-[#06201d]" : "text-muted"}`}>
+          <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={`flex min-h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all ${mode === m ? "btn-brand" : "text-muted hover:text-brand"}`}>
             <Icon className="size-4" aria-hidden /> {label}
           </button>
         ))}
@@ -83,15 +84,16 @@ export default function ScanPage() {
           )}
         </div>
         <Card className="space-y-3">
+          <Image src="/brand/scan.svg" alt="" width={1024} height={1024} unoptimized className="icon-float mx-auto size-40" />
           <p className="font-display font-bold">No barcode, or product not found?</p>
           <p className="text-sm text-muted">Photograph the ingredient list and Nutrition Facts panel. We&apos;ll read them on your device and analyze them right away.</p>
           <LinkButton href="/analyze" variant="secondary" className="w-full">
             <Camera className="size-4" aria-hidden /> Scan a label
           </LinkButton>
           <div className="flex flex-wrap gap-1.5 pt-1">
-            <Badge tone="grey">Flashlight support</Badge>
-            <Badge tone="grey">Works offline</Badge>
-            <Badge tone="grey">No photo upload needed</Badge>
+            <Badge tone="brand">Flashlight support</Badge>
+            <Badge tone="tomato">Works offline</Badge>
+            <Badge tone="sun">No photo upload needed</Badge>
           </div>
         </Card>
       </div>

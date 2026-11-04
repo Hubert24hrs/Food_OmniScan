@@ -7,6 +7,7 @@ import '../widgets/score_widgets.dart';
 import 'assistant_screen.dart';
 import 'explore_screens.dart';
 import 'product_screen.dart';
+import '../widgets/fresh.dart';
 
 class ProductTile extends StatelessWidget {
   const ProductTile({super.key, required this.p, this.subtitle});
@@ -73,28 +74,36 @@ class _HomeScreenState extends State<HomeScreen> {
     final app = context.watch<AppState>();
     final t = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Food omniScan')),
+      appBar: AppBar(title: const Wordmark(), bottom: const PreferredSize(preferredSize: Size.fromHeight(3), child: FreshStripe())),
       body: RefreshIndicator(
         onRefresh: () async => setState(() => _recent = _load()),
         child: ListView(padding: const EdgeInsets.all(16), children: [
           Card(
-            color: Theme.of(context).colorScheme.primary,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text("Know what's inside.", style: t.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text(app.activeProfile != null ? 'Checking for ${app.activeProfile!['name']}' : 'Scan a barcode or a label',
-                    style: const TextStyle(color: Colors.white70)),
-                const SizedBox(height: 12),
-                FilledButton.tonalIcon(onPressed: widget.onScan, icon: const Icon(Icons.qr_code_scanner), label: const Text('Scan a product')),
-              ]),
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(children: [
+              Positioned(
+                right: -24,
+                top: -10,
+                bottom: -10,
+                child: Opacity(opacity: 0.95, child: Image.asset('assets/brand/hero_plate.webp', fit: BoxFit.contain)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 120, 20),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text("Know what's inside.", style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text(app.activeProfile != null ? 'Checking for ${app.activeProfile!['name']}' : 'Scan a barcode or a label',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(onPressed: widget.onScan, icon: const Icon(Icons.qr_code_scanner), label: const Text('Scan a product')),
+                ]),
+              ),
+            ]),
           ),
           const SizedBox(height: 8),
           Card(
             child: ListTile(
-              leading: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
+              leading: const IconTile(icon: Icons.auto_awesome, index: 3),
               title: const Text('Ask the nutrition assistant', style: TextStyle(fontWeight: FontWeight.w700)),
               subtitle: const Text('Ingredients, nutrients, healthier swaps'),
               trailing: const Icon(Icons.chevron_right),
@@ -103,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Card(
             child: ListTile(
-              leading: Icon(Icons.explore_outlined, color: Theme.of(context).colorScheme.primary),
+              leading: const IconTile(icon: Icons.explore_outlined, index: 1),
               title: const Text('Explore', style: TextStyle(fontWeight: FontWeight.w700)),
               subtitle: const Text('Recipes, meal plans, pantry, rankings, Nigerian foods, food safety'),
               trailing: const Icon(Icons.chevron_right),

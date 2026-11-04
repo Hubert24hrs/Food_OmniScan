@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
+import '../widgets/fresh.dart';
 import 'kitchen_screens.dart';
 import 'recipe_screens.dart';
 
@@ -22,10 +23,10 @@ class ExploreScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Explore')),
       body: ListView(padding: const EdgeInsets.all(12), children: [
-        for (final t in tiles)
+        for (final (i, t) in tiles.indexed)
           Card(
             child: ListTile(
-              leading: Icon(t.$1, color: Theme.of(context).colorScheme.primary),
+              leading: IconTile(icon: t.$1, index: i),
               title: Row(children: [
                 Flexible(child: Text(t.$2, style: const TextStyle(fontWeight: FontWeight.w700))),
                 if (t.$4 != null) ...[const SizedBox(width: 6), Chip(label: Text(t.$4!), visualDensity: VisualDensity.compact)],

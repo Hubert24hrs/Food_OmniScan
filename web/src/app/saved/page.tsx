@@ -20,7 +20,7 @@ export default function SavedPage() {
     <Page title="Saved products">
       <div className="mb-4 inline-flex rounded-2xl border border-line bg-surface p-1" role="tablist">
         {TABS.map(([k, l]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${tab === k ? "bg-brand text-white dark:text-[#06201d]" : "text-muted"}`}>{l}</button>
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`min-h-10 rounded-xl px-4 text-sm font-semibold ${tab === k ? "btn-brand" : "text-muted"}`}>{l}</button>
         ))}
       </div>
       {f.error ? <ErrorBox error={f.error} onRetry={f.reload} /> : null}
