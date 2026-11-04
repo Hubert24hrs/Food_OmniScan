@@ -110,17 +110,17 @@ device testing · ⏳ designed in the schema/API but not built yet
 
 | Criterion | Where verified |
 |---|---|
-| Register + dietary profile | `backend/tests/test_auth_profiles.py`, web E2E |
-| Scan barcode → real product | `test_products.py` (mocked OFF) + `test_live_off.py` (live OFF, opt-in) |
-| Ingredient label photo → extracted ingredients | web OCR → `/analysis/ingredients-text`; `test_ingredient_parser.py` |
-| Transparent, reproducible score | `test_scoring.py` (determinism, deductions, versioning) |
-| Allergens + warnings | `test_allergens.py` |
-| Personal compatibility | `test_compatibility.py` |
-| Compare + alternatives | `test_alternatives_compare.py` |
-| History + favourites | `test_user_data.py` |
-| Missing product submission | `test_submissions_admin.py` |
-| Admin moderation | `test_submissions_admin.py` |
-| Subscriptions + AI quotas | `test_billing.py` |
-| Graceful failures | `test_products.py` (OFF down, invalid barcode) |
+| Register + dietary profile | `test_api.py::test_register_login_me`, `::test_dietary_profile_and_family`; E2E "user registers…" |
+| Scan barcode → real product | `test_api.py::test_scan_found_analysed_and_cached` (mocked OFF), `test_live_off.py` (live OFF), E2E "visitor can scan…" |
+| Ingredient label photo → extracted ingredients | Web/mobile on-device OCR → `/analysis/text`; `test_api.py::test_text_analysis_from_ocr`, parser unit tests |
+| Transparent, reproducible score | `test_engine_units.py` scoring tests (determinism, deductions, caps, versioning) |
+| Allergens + warnings | `test_engine_units.py` allergen tests; E2E critical allergen alert |
+| Personal compatibility | `test_engine_units.py` compatibility tests; Flutter banner widget test |
+| Compare + alternatives | `test_api.py::test_alternatives_and_compare` |
+| History + favourites | `test_api.py::test_favourites_lists_diary_export_delete`, `::test_offline_sync_idempotent` |
+| Missing product submission | `test_api.py::test_unknown_product_submission_and_moderation` |
+| Admin moderation | same as above, plus `::test_admin_methodology_versioning`, `::test_recall_notifies_users_and_zeroes_score` |
+| Subscriptions + AI quotas | `test_api.py::test_stripe_webhook_…`, `::test_revenuecat_and_paystack_webhooks`, `::test_ai_assistant_grounded_and_quota`, `::test_failed_ai_call_not_charged` |
+| Graceful failures | `test_api.py::test_scan_not_found_and_invalid`, `::test_provider_down_is_graceful`, `::test_ai_not_configured_is_explicit` |
 
 See [TESTING.md](TESTING.md) for how to run each suite.
