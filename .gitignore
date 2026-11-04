@@ -1,0 +1,40 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.db
+backend/uploads/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+web/test-results/
+web/playwright-report/
+*.tsbuildinfo
+next-env.d.ts
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/ios/Pods/
+mobile/ios/Flutter/Generated.xcconfig
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

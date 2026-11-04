@@ -1,0 +1,26 @@
+[project]
+name = "foodomniscan-api"
+version = "0.1.0"
+description = "Food omniScan backend: food intelligence API (FastAPI)"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+ignore = ["B008", "S101", "S311", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/models/__init__.py" = ["F401"]
+"tests/**" = ["S105", "S106"]
+"app/api/**" = ["B904"]
+"app/data/**" = ["E501"]
+"app/services/ai/features.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: hits real external APIs (opt-in with -m live)"]
+addopts = "-m 'not live' -q"
+filterwarnings = ["ignore::DeprecationWarning"]
