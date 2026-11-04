@@ -180,7 +180,42 @@ class BudgetScreen extends StatelessWidget {
             ),
             FilledButton.icon(onPressed: () => _log(context, cur, reload), icon: const Icon(Icons.add), label: const Text('Log a purchase')),
             const SizedBox(height: 8),
-            const Text('Set a monthly budget and see full shopping history in the web app.', style: TextStyle(fontSize: 12)),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final c = TextEditingController(text: budget?.toString() ?? '');
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (d) => AlertDialog(
+                    title: const Text('Monthly grocery budget'),
+                    content: TextField(controller: c, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Amount ($cur)')),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
+                      FilledButton(onPressed: () => Navigator.pop(d, true), child: const Text('Save')),
+                    ],
+                  ),
+                );
+                final v = double.tryParse(c.text);
+                if (ok != true || v == null || !context.mounted) return;
+                await runAction(context, () => context.read<AppState>().api.put('/budget', {'monthly_amount': v, 'currency': cur}), ok: 'Budget saved');
+                await reload();
+              },
+              icon: const Icon(Icons.savings_outlined),
+              label: Text(budget == null ? 'Set a monthly budget' : 'Change monthly budget'),
+            ),
+            const SectionHeader('Shopping history'),
+            ApiView(
+              path: '/purchases',
+              builder: (context, data, reloadHistory) => Column(children: [
+                if ((data as List).isEmpty) const Text('No purchases logged yet.'),
+                for (final p in data.cast<Map<String, dynamic>>())
+                  ListTile(
+                    dense: true,
+                    title: Text(p['name'] as String),
+                    subtitle: Text('${p['purchased_on']}${p['store'] != null ? ' · ${p['store']}' : ''}'),
+                    trailing: Text('${p['currency']} ${(p['price'] as num).toStringAsFixed(2)}'),
+                  ),
+              ]),
+            ),
           ]);
         },
       ),

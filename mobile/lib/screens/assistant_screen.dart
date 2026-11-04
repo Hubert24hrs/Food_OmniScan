@@ -28,6 +28,8 @@ class _AssistantScreenState extends State<AssistantScreen> {
   final msgs = <ChatMessage>[];
   bool busy = false;
   String? error;
+  String language = 'en';
+  static const _languages = {'en': 'English', 'pcm': 'Pidgin', 'yo': 'Yoruba', 'ig': 'Igbo', 'ha': 'Hausa', 'fr': 'French', 'es': 'Spanish'};
 
   List<String> get _suggestions => widget.productId != null
       ? ['Why did this product get its score?', 'Is this OK for someone avoiding added sugar?', 'What does each additive do?']
@@ -51,6 +53,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
         'product_ids': [if (widget.productId != null) widget.productId],
         'history': history.length > 16 ? history.sublist(history.length - 16) : history,
         if (app.activeProfile != null) 'profile_id': app.activeProfile!['id'],
+        'language': language,
       }) as Map<String, dynamic>;
       final sources = [for (final s in (r['sources'] as List? ?? [])) (s as Map)['key'] as String];
       setState(() => msgs.add(ChatMessage('assistant', r['answer'] as String? ?? '', sources: sources)));
@@ -84,7 +87,15 @@ class _AssistantScreenState extends State<AssistantScreen> {
     final app = context.watch<AppState>();
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Nutrition assistant')),
+      appBar: AppBar(title: const Text('Nutrition assistant'), actions: [
+        PopupMenuButton<String>(
+          tooltip: 'Answer language',
+          initialValue: language,
+          onSelected: (v) => setState(() => language = v),
+          itemBuilder: (_) => [for (final e in _languages.entries) PopupMenuItem(value: e.key, child: Text(e.key == 'en' ? e.value : '${e.value} (Plus)'))],
+          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Row(children: [const Icon(Icons.translate), const SizedBox(width: 4), Text(_languages[language]!)])),
+        ),
+      ]),
       body: !app.signedIn
           ? const Center(
               child: Padding(

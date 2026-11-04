@@ -19,10 +19,72 @@ class _DiaryScreenState extends State<DiaryScreen> {
   Map<String, dynamic>? day;
   String? error;
   bool busy = false;
+  DateTime date = DateTime.now();
+
+  String get _day => date.toIso8601String().substring(0, 10);
 
   Map<String, String> get _q {
     final p = context.read<AppState>().activeProfile;
     return {if (p != null) 'profile_id': p['id'] as String};
+  }
+
+  Future<void> _shiftDay(int days) async {
+    setState(() => date = date.add(Duration(days: days)));
+    await _load();
+  }
+
+  Future<void> _targets() async {
+    final t = (day?['targets'] as Map<String, dynamic>?) ?? {};
+    const fields = [
+      ('energy_kcal', 'Calories'),
+      ('protein', 'Protein (g)'),
+      ('carbohydrates', 'Carbs (g)'),
+      ('fat', 'Fat (g)'),
+      ('fiber', 'Fiber (g)'),
+      ('sodium_mg', 'Sodium (mg)'),
+      ('water_ml', 'Water (ml)'),
+      ('weight_goal_kg', 'Goal weight (kg)'),
+    ];
+    final ctrls = {for (final (k, _) in fields) k: TextEditingController(text: t[k] == null ? '' : '${(t[k] as num).round()}')};
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Daily targets'),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            for (final (k, l) in fields) TextField(controller: ctrls[k], keyboardType: TextInputType.number, decoration: InputDecoration(labelText: l)),
+            const SizedBox(height: 6),
+            const Text('Defaults are FDA Daily Values for a 2,000-calorie diet. Ideally set these with a health professional.', style: TextStyle(fontSize: 12)),
+          ]),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final goals = {for (final e in ctrls.entries) if (double.tryParse(e.value.text) != null) e.key: double.parse(e.value.text)};
+    await runAction(context, () => context.read<AppState>().api.put('/diary/goals', {'goals': goals, ..._q}), ok: 'Targets saved');
+    await _load();
+  }
+
+  Future<void> _weight() async {
+    final c = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Log weight'),
+        content: TextField(controller: c, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Weight (kg)')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(d, true), child: const Text('Save')),
+        ],
+      ),
+    );
+    final w = double.tryParse(c.text);
+    if (ok != true || w == null || !mounted) return;
+    await runAction(context, () => context.read<AppState>().api.put('/diary/weight', {'weight_kg': w, 'day': _day, ..._q}), ok: 'Weight saved');
   }
 
   @override
@@ -35,7 +97,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final app = context.read<AppState>();
     if (!app.signedIn) return;
     try {
-      final d = await app.api.get('/diary', query: _q);
+      final d = await app.api.get('/diary', query: {..._q, 'day': _day});
       if (mounted) setState(() => day = d as Map<String, dynamic>);
     } on ApiException catch (e) {
       if (mounted) setState(() => error = e.message);
@@ -72,13 +134,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
           'meal_type': meal,
           'description': desc.text.trim(),
           'energy_kcal': double.tryParse(kcal.text),
+          'day': _day,
           ..._q,
         }));
     await _load();
   }
 
   Future<void> _water(int ml) async {
-    await runAction(context, () => context.read<AppState>().api.post('/diary/water', {'ml': ml, ..._q}));
+    await runAction(context, () => context.read<AppState>().api.post('/diary/water', {'ml': ml, 'day': _day, ..._q}));
     await _load();
   }
 
@@ -141,6 +204,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             'fat': n(items[i], 'fat_g'),
             'fiber': n(items[i], 'fiber_g'),
             'is_estimate': true,
+            'day': _day,
             ..._q,
           }
     ];
@@ -194,6 +258,27 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final micros = day?['micros'] as Map<String, dynamic>?;
     return Scaffold(
       appBar: AppBar(title: const Text('Food diary'), actions: [
+        IconButton(tooltip: 'Previous day', icon: const Icon(Icons.chevron_left), onPressed: () => _shiftDay(-1)),
+        TextButton(
+          onPressed: () async {
+            final d = await showDatePicker(context: context, initialDate: date, firstDate: DateTime(2024), lastDate: DateTime.now().add(const Duration(days: 7)));
+            if (d != null) {
+              setState(() => date = d);
+              await _load();
+            }
+          },
+          child: Text(_day == DateTime.now().toIso8601String().substring(0, 10) ? 'Today' : _day.substring(5)),
+        ),
+        IconButton(tooltip: 'Next day', icon: const Icon(Icons.chevron_right), onPressed: () => _shiftDay(1)),
+        PopupMenuButton<String>(
+          tooltip: 'More',
+          icon: const Icon(Icons.more_vert),
+          onSelected: (v) => v == 'targets' ? _targets() : _weight(),
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'targets', child: Text('Daily targets')),
+            PopupMenuItem(value: 'weight', child: Text('Log weight')),
+          ],
+        ),
         PopupMenuButton<String>(
           tooltip: 'Reports',
           icon: const Icon(Icons.insights),
@@ -259,7 +344,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
             for (final m in micros.values.cast<Map<String, dynamic>>())
               ListTile(dense: true, title: Text(m['label'] as String), trailing: Text('${m['amount']} ${m['unit']} · ${m['pct_dv']}%')),
           ],
-          const SectionHeader('Logged today'),
+          SectionHeader(_day == DateTime.now().toIso8601String().substring(0, 10) ? 'Logged today' : 'Logged on $_day'),
           for (final e in (day?['entries'] as List? ?? []).cast<Map<String, dynamic>>())
             ListTile(
               title: Text(e['description'] as String),

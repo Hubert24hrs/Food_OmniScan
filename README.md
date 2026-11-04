@@ -114,10 +114,8 @@ Or run everything with PostgreSQL: `docker compose up --build`. See [DEPLOYMENT.
   saturated fat and sodium per 100 g are high). See SCORING_METHODOLOGY.md.
 - **Web session storage.** The web app keeps the session token in `localStorage`. Move to httpOnly cookies
   before launch (SECURITY.md).
-- **Mobile app scope.** The Flutter app covers scanning, label OCR, results, search, diary (water, targets,
-  meal photos, reports), recipes, meal plans, pantry, budget logging, rankings, local foods, food safety and
-  learning. Household management, budget setting, family profile editing, data export and account deletion
-  are on the web app.
+- **Mobile app scope.** The Flutter app is the main platform and has every feature, including admin tools for staff accounts.
+  Plans are bought on the web in test builds; store builds will use Google Play and App Store billing via RevenueCat.
 
 ## Licensing & attribution
 Product data © Open Food Facts contributors, available under the Open Database License; images under

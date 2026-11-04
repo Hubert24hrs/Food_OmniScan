@@ -7,14 +7,14 @@ How Food omniScan covers the 170 capabilities in the combined competitor feature
 
 > **Never paywalled:** scanning, the health score and its full explanation, allergen warnings, diet compatibility, recalls, verified lab results, and food-safety research. Paid plans add convenience, depth and AI. They never add safety information.
 
-**Platforms:** W = web app, M = mobile app (Android/iOS), A = API only.
+**Platforms:** the mobile app (Android/iOS) is the main platform, and every feature below is available in it, including the admin tools for admin and moderator accounts. The web app has the same features. W = web app, M = mobile app.
 
 ## Totals
 
 | Status | Count |
 |---|---|
-| Done | 153 |
-| Partial | 15 |
+| Done | 154 |
+| Partial | 14 |
 | Not yet | 2 |
 
 Most gaps are limited by data rather than code: retailer price feeds, West African food-composition data, and a NAFDAC API.
@@ -30,7 +30,7 @@ Most gaps are limited by data rather than code: retailer price feeds, West Afric
 | 3 | Nutrition label scanning | Done | US Nutrition Facts and EU tables parsed, with OCR digit correction | Free |
 | 4 | AI food recognition | Done | Gemini vision: packaged (front of pack) and unpackaged (meal) | AI photo credits |
 | 5 | Meal photo scanning | Done | W, M: dishes, portions and estimated nutrients, reviewed then logged as estimates | AI photo credits |
-| 6 | Product image recognition | Partial | W: Discover camera button finds the product by name or brand. Not on mobile yet | AI photo credits |
+| 6 | Product image recognition | Done | W, M: camera button on Discover / Explore finds the product by name, brand or visible barcode | AI photo credits |
 | 7 | Multi-language label recognition | Partial | AI reading returns the original text plus an English translation, and scores the translation. On-device OCR is Latin-script only | AI photo credits |
 | 8 | Manual product search | Done | Name, brand, category or barcode; voice search on web | Free |
 | 9 | Unknown product submission | Done | W submission flow with photos; moderator review | Free |
@@ -145,7 +145,7 @@ A study about a food category is never presented as a result for a specific bran
 | 113 | Healthier shopping suggestions | Done | Alternatives | Free (monthly limit) |
 | 114 | Favourites | Done | Saved and trusted lists | Free |
 | 115–117 | Pantry, expiry dates, reminders | Done | Reminders run in the daily job | Plus |
-| 118 | Household sharing | Done | Shared pantry, lists and budget; invite by email. Managed on web | Family (members on any plan) |
+| 118 | Household sharing | Done | W, M: shared pantry, lists and budget; invite by email | Family (members on any plan) |
 | 119, 120 | Budget, shopping history | Done | Per person or household; multi-currency incl. ₦ | Plus |
 | 121 | Product availability | Partial | "Seen at" stores from user price reports | Free (stores), Plus (prices) |
 | 122 | Grocery price comparison across retailers | Not yet | Needs retailer partnerships or data feeds | — |
@@ -207,4 +207,4 @@ Each kind of notification can be switched on or off on the profile page. The dai
 ## Beyond the list
 
 - **Restaurant and menu intelligence** (from the Phase 3 roadmap) isn't built.
-- **Mobile gaps:** household management and setting a monthly budget are on the web app only.
+- **Mobile:** every feature is reachable from the Explore tab, grouped into Scan & find, Eat & track, Home & shopping, Know your food, and You. Admin & moderation appears there for staff accounts.

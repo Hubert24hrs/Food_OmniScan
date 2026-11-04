@@ -169,6 +169,9 @@ class _MealPlansScreenState extends State<MealPlansScreen> {
   Future<void> _generate() async {
     var days = 3;
     var region = 'NG';
+    final kcal = TextEditingController();
+    final budget = TextEditingController();
+    final prefs = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => StatefulBuilder(
@@ -191,6 +194,9 @@ class _MealPlansScreenState extends State<MealPlansScreen> {
               ],
               onChanged: (v) => set(() => region = v ?? 'NG'),
             ),
+            TextField(controller: kcal, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Calories a day (optional)')),
+            TextField(controller: budget, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Weekly budget (optional)')),
+            TextField(controller: prefs, decoration: const InputDecoration(labelText: 'Anything else? e.g. quick dinners')),
             const SizedBox(height: 8),
             const Text('Follows your profile\'s allergies and diets. Included with Premium.', style: TextStyle(fontSize: 12)),
           ]),
@@ -207,6 +213,10 @@ class _MealPlansScreenState extends State<MealPlansScreen> {
           'days': days,
           'region': region,
           'profile_id': app.activeProfile?['id'],
+          if (int.tryParse(kcal.text) != null) 'kcal_target': int.parse(kcal.text),
+          if (double.tryParse(budget.text) != null) 'weekly_budget': double.parse(budget.text),
+          if (double.tryParse(budget.text) != null) 'currency': app.me?['currency'],
+          if (prefs.text.trim().isNotEmpty) 'preferences': prefs.text.trim(),
         }));
     if (r is Map && mounted) {
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealPlanScreen(planId: r['id'] as String)));
@@ -246,6 +256,47 @@ class MealPlanScreen extends StatelessWidget {
   const MealPlanScreen({super.key, required this.planId});
   final String planId;
 
+  Future<void> _addMeal(BuildContext context, Map<String, dynamic> plan, int day, Future<void> Function() reload) async {
+    final title = TextEditingController();
+    var mealType = 'lunch';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, set) => AlertDialog(
+          title: Text('Add a meal to day $day'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            DropdownButtonFormField<String>(
+              initialValue: mealType,
+              items: [for (final m in ['breakfast', 'lunch', 'dinner', 'snack']) DropdownMenuItem(value: m, child: Text(m))],
+              onChanged: (v) => set(() => mealType = v ?? 'lunch'),
+            ),
+            TextField(controller: title, decoration: const InputDecoration(labelText: 'Meal (e.g. Moi moi)')),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Add')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || title.text.trim().isEmpty || !context.mounted) return;
+    final days = [
+      for (final d in (plan['days'] as List).cast<Map<String, dynamic>>())
+        {
+          'day': d['day'],
+          'meals': [
+            ...(d['meals'] as List),
+            if (d['day'] == day) {'meal_type': mealType, 'title': title.text.trim(), 'recipe_id': null},
+          ],
+        },
+    ];
+    await runAction(
+      context,
+      () => context.read<AppState>().api.put('/meal-plans/$planId', {'name': plan['name'], 'start_date': plan['start_date'], 'profile_id': plan['profile_id'], 'days': days}),
+    );
+    await reload();
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.read<AppState>();
@@ -259,14 +310,18 @@ class MealPlanScreen extends StatelessWidget {
       ]),
       body: ApiView(
         path: '/meal-plans/$planId',
-        builder: (context, p, _) => ListView(padding: const EdgeInsets.all(12), children: [
+        builder: (context, p, reload) => ListView(padding: const EdgeInsets.all(12), children: [
           Text(p['name'] as String, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
           for (final d in (p['days'] as List).cast<Map<String, dynamic>>())
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Day ${d['day']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Row(children: [
+                    Text('Day ${d['day']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                    const Spacer(),
+                    TextButton.icon(onPressed: () => _addMeal(context, p as Map<String, dynamic>, d['day'] as int, reload), icon: const Icon(Icons.add), label: const Text('Add meal')),
+                  ]),
                   for (final m in (d['meals'] as List).cast<Map<String, dynamic>>())
                     ListTile(
                       dense: true,

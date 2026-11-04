@@ -8,7 +8,7 @@ import 'package:food_omniscan/core/offline.dart';
 import 'package:food_omniscan/core/theme.dart';
 import 'package:food_omniscan/screens/assistant_screen.dart';
 import 'package:food_omniscan/screens/diary_screen.dart';
-import 'package:food_omniscan/screens/explore_screens.dart';
+import 'package:food_omniscan/screens/explore_hub.dart';
 import 'package:food_omniscan/widgets/common.dart';
 import 'package:food_omniscan/widgets/fresh.dart';
 import 'package:food_omniscan/widgets/analysis_view.dart';
@@ -241,13 +241,27 @@ void main() {
     expect(find.text('Included with Plus'), findsOneWidget);
   });
 
-  testWidgets('explore lists the new modules', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 2000));
+  testWidgets('explore lists every feature, and admin tools only for staff', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 6000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
-    for (final t in ['Recipes', 'Meal planner', 'Pantry', 'Grocery budget', 'Category rankings', 'Nigerian foods', 'Food safety research', 'Learn']) {
-      expect(find.text(t), findsOneWidget);
+    final api = ApiClient(baseUrl: 'http://api.test/api/v1', client: MockClient((_) async => http.Response('{}', 200)));
+    final app = AppState(api: api)..me = {'id': 'u1', 'role': 'user'};
+    await tester.pumpWidget(ChangeNotifierProvider.value(value: app, child: const MaterialApp(home: ExploreScreen())));
+    const titles = [
+      'Scan a barcode', 'Scan a label', 'Search products', 'Compare products', 'Scan history', 'Saved & trusted', 'Add a missing product',
+      'Recipes', 'Meal planner', 'Ask the nutrition assistant', 'Picked for you', 'Category rankings',
+      'Shopping lists', 'Pantry', 'Grocery budget', 'Household',
+      'Ingredient encyclopedia', 'Nigerian foods', 'Food safety research', 'Food recalls', 'Learn', 'Research sources',
+      'Alerts', 'Notification settings', 'Plans & usage', 'Privacy & data',
+    ];
+    for (final t in titles) {
+      expect(find.text(t), findsOneWidget, reason: t);
     }
+    expect(find.text('Admin & moderation'), findsNothing);
+    app.me = {'id': 'u1', 'role': 'admin'};
+    app.notifyListeners();
+    await tester.pump();
+    expect(find.text('Admin & moderation'), findsOneWidget);
   });
 
   testWidgets('animated icons stop when the system asks for reduced motion', (tester) async {

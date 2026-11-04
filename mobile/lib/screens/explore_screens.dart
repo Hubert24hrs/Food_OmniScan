@@ -1,49 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/common.dart';
-import '../widgets/fresh.dart';
-import 'kitchen_screens.dart';
 import 'recipe_screens.dart';
-
-/// Hub for everything beyond the scanner.
-class ExploreScreen extends StatelessWidget {
-  const ExploreScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final tiles = <(IconData, String, String, String?, Widget)>[
-      (Icons.restaurant_menu, 'Recipes', 'Nigerian, US and European recipes checked against your allergies', null, const RecipesScreen()),
-      (Icons.calendar_month, 'Meal planner', 'Plan the week and build a shopping list', 'Plus', const MealPlansScreen()),
-      (Icons.kitchen, 'Pantry', 'Track food at home and get expiry reminders', 'Plus', const PantryScreen()),
-      (Icons.account_balance_wallet_outlined, 'Grocery budget', 'Spending and shopping history', 'Plus', const BudgetScreen()),
-      (Icons.emoji_events_outlined, 'Category rankings', 'Best-scoring products in each category', null, const RankingsScreen()),
-      (Icons.public, 'Nigerian foods', 'Dishes and ingredients with Yoruba, Igbo, Hausa and Pidgin names', null, const LocalFoodsScreen()),
-      (Icons.science_outlined, 'Food safety research', 'Heavy metals, microplastics, pesticides, glyphosate, aflatoxins', null, const SafetyScreen()),
-      (Icons.menu_book_outlined, 'Learn', 'Short, sourced guides to labels and nutrition', null, const LearnScreen()),
-    ];
-    return Scaffold(
-      appBar: AppBar(title: const Text('Explore')),
-      body: ListView(padding: const EdgeInsets.all(12), children: [
-        for (final (i, t) in tiles.indexed)
-          Card(
-            child: ListTile(
-              leading: IconTile(icon: t.$1, index: i),
-              title: Row(children: [
-                Flexible(child: Text(t.$2, style: const TextStyle(fontWeight: FontWeight.w700))),
-                if (t.$4 != null) ...[const SizedBox(width: 6), Chip(label: Text(t.$4!), visualDensity: VisualDensity.compact)],
-              ]),
-              subtitle: Text(t.$3),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => t.$5)),
-            ),
-          ),
-        const Padding(
-          padding: EdgeInsets.all(12),
-          child: Text('Household sharing is managed in the web app for now.', style: TextStyle(fontSize: 12)),
-        ),
-      ]),
-    );
-  }
-}
 
 class RankingsScreen extends StatefulWidget {
   const RankingsScreen({super.key});

@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../core/app_state.dart';
 import '../widgets/score_widgets.dart';
-import 'assistant_screen.dart';
-import 'explore_screens.dart';
+import 'explore_hub.dart';
 import 'product_screen.dart';
 import '../widgets/fresh.dart';
 
@@ -35,8 +34,9 @@ class ProductTile extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.onScan});
+  const HomeScreen({super.key, required this.onScan, this.onExplore});
   final VoidCallback onScan;
+  final VoidCallback? onExplore;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -100,25 +100,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ]),
           ),
-          const SizedBox(height: 8),
-          Card(
-            child: ListTile(
-              leading: const IconTile(icon: Icons.auto_awesome, index: 3),
-              title: const Text('Ask the nutrition assistant', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Ingredients, nutrients, healthier swaps'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantScreen())),
-            ),
-          ),
-          Card(
-            child: ListTile(
-              leading: const IconTile(icon: Icons.explore_outlined, index: 1),
-              title: const Text('Explore', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Recipes, meal plans, pantry, rankings, Nigerian foods, food safety'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExploreScreen())),
-            ),
-          ),
+          const SizedBox(height: 12),
+          QuickGrid(onAll: widget.onExplore ?? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExploreScreen()))),
           const SizedBox(height: 16),
           Text('Recent', style: t.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
           FutureBuilder(
@@ -136,17 +119,24 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class DiscoverScreen extends StatefulWidget {
-  const DiscoverScreen({super.key});
+  const DiscoverScreen({super.key, this.initialQuery});
+  final String? initialQuery;
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
 }
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
-  final q = TextEditingController();
+  late final q = TextEditingController(text: widget.initialQuery ?? '');
   List<Map<String, dynamic>>? results;
   String? error;
   bool busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if ((widget.initialQuery ?? '').length >= 2) WidgetsBinding.instance.addPostFrameCallback((_) => _search());
+  }
 
   Future<void> _search() async {
     if (q.text.trim().length < 2) return;
