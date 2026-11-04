@@ -38,3 +38,6 @@ mobile/ios/Runner/GoogleService-Info.plist
 Thumbs.db
 .idea/
 .vscode/
+
+# Local APK download page (not committed)
+mobile/dist/
