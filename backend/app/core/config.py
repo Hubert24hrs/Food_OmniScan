@@ -7,7 +7,7 @@ is committed. See `.env.example` for the full list.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,7 +20,16 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # PostgreSQL in production: postgresql+psycopg://user:pass@host:5432/omniscan
+    # (plain postgres:// or postgresql:// URLs from hosting providers are accepted too).
     database_url: str = "sqlite:///./omniscan.db"
+
+    @field_validator("database_url")
+    @classmethod
+    def _psycopg_driver(cls, v: str) -> str:
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return "postgresql+psycopg://" + v[len(prefix) :]
+        return v
 
     # CORS: comma-separated origins
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"

@@ -28,6 +28,22 @@ cp backend/.env.example backend/.env    # fill JWT_SECRET
 docker compose up --build               # API :8000 (runs alembic upgrade head), web :3000, Postgres
 ```
 
+## Quickest low-cost launch: Railway (about $5–10 a month)
+One Railway project runs the API, the website and PostgreSQL from this GitHub repo, with free HTTPS addresses
+(`*.up.railway.app`) until you add your own domain. `backend/railway.json` and `web/railway.json` set the build and health checks.
+
+1. Sign up at railway.com with GitHub and choose the Hobby plan.
+2. **New project → Deploy PostgreSQL.**
+3. **New → GitHub repo → Food_OmniScan**, root directory `backend`. Variables:
+   `PORT=8000`, `ENVIRONMENT=production`, `DATABASE_URL=${{Postgres.DATABASE_URL}}` (plain `postgresql://` URLs are converted
+   automatically), `JWT_SECRET` (long random string), `GEMINI_API_KEY`, `REVENUECAT_WEBHOOK_AUTH`,
+   `CORS_ORIGINS` and `PUBLIC_APP_URL` (the web address from step 4). Add a **volume** mounted at `/app/uploads` and set
+   `RAILWAY_RUN_UID=0` so the container can write to it. **Settings → Networking → Generate domain.**
+4. **New → GitHub repo → Food_OmniScan** again, root directory `web`. Variables: `PORT=3000`,
+   `NEXT_PUBLIC_API_URL=https://<api domain>/api/v1`, `NEXT_PUBLIC_SUPPORT_EMAIL=<support address>`. Generate a domain.
+5. Check `https://<web domain>/privacy`, `/terms` and `/account-deletion`, and `https://<api domain>/health`.
+6. Create the Play reviewer account on the live site and give it Premium (Admin → Users, or a `manual` subscription row).
+
 ## Production (recommended: Google Cloud)
 | Component | Service |
 |---|---|

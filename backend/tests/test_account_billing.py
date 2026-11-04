@@ -103,3 +103,11 @@ def test_free_assistant_allowance_runs_out_with_an_upgrade_hint(respx_mock, clie
     assert "AI nutrition assistant questions" in d["message"] and "Plus gives you more" in d["message"]
     usage = client.get(f"{API}/billing/me", headers=h).json()["features"]["ai_assistant"]
     assert usage["used"] == limit and usage["limit"] == limit
+
+
+def test_hosting_provider_database_urls_use_the_psycopg_driver():
+    from app.core.config import Settings
+
+    for raw in ("postgres://u:p@db.example:5432/app", "postgresql://u:p@db.example:5432/app"):
+        assert Settings(database_url=raw).database_url == "postgresql+psycopg://u:p@db.example:5432/app"
+    assert Settings(database_url="sqlite:///./x.db").database_url == "sqlite:///./x.db"
