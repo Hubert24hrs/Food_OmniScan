@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+/* Food omniScan design tokens. Light/dark via prefers-color-scheme or [data-theme]. */
+:root {
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --surface-2: #eef3f1;
+  --border: #dde5e2;
+  --text: #0f1f1c;
+  --text-muted: #5b6b67;
+  --brand: #0f766e;
+  --brand-strong: #134e4a;
+  --brand-soft: #ccfbf1;
+  --accent: #5eead4;
+  --good: #15803d;
+  --good-soft: #dcfce7;
+  --ok: #4d7c0f;
+  --ok-soft: #ecfccb;
+  --warn: #b45309;
+  --warn-soft: #fef3c7;
+  --bad: #b91c1c;
+  --bad-soft: #fee2e2;
+  --grey: #64748b;
+  --grey-soft: #e2e8f0;
+  --ring: rgba(15, 118, 110, 0.35);
+  --shadow: 0 1px 2px rgba(15, 31, 28, 0.06), 0 8px 24px rgba(15, 31, 28, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1412;
+    --surface: #111c1a;
+    --surface-2: #172522;
+    --border: #23332f;
+    --text: #e6f0ed;
+    --text-muted: #94a8a3;
+    --brand: #2dd4bf;
+    --brand-strong: #5eead4;
+    --brand-soft: #123d38;
+    --good: #4ade80;
+    --good-soft: #12301f;
+    --ok: #a3e635;
+    --ok-soft: #26330f;
+    --warn: #fbbf24;
+    --warn-soft: #3a2a0b;
+    --bad: #f87171;
+    --bad-soft: #3b1414;
+    --grey: #94a3b8;
+    --grey-soft: #1f2a30;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1412;
+  --surface: #111c1a;
+  --surface-2: #172522;
+  --border: #23332f;
+  --text: #e6f0ed;
+  --text-muted: #94a8a3;
+  --brand: #2dd4bf;
+  --brand-strong: #5eead4;
+  --brand-soft: #123d38;
+  --good: #4ade80;
+  --good-soft: #12301f;
+  --ok: #a3e635;
+  --ok-soft: #26330f;
+  --warn: #fbbf24;
+  --warn-soft: #3a2a0b;
+  --bad: #f87171;
+  --bad-soft: #3b1414;
+  --grey: #94a3b8;
+  --grey-soft: #1f2a30;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-grey: var(--grey);
+  --color-grey-soft: var(--grey-soft);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.focus-ring:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.75rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@keyframes scanline {
+  0%, 100% { transform: translateY(-40%); opacity: 0.4; }
+  50% { transform: translateY(40%); opacity: 1; }
+}
+
+.scanline {
+  animation: scanline 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .scanline { animation: none; }
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

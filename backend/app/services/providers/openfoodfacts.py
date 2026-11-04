@@ -64,12 +64,28 @@ def _client() -> httpx.Client:
     return httpx.Client(timeout=s.off_timeout_seconds, headers={"User-Agent": s.off_user_agent}, follow_redirects=True)
 
 
+def _items(text: str) -> int:
+    return text.count(",") + text.count(";") + 1
+
+
+def pick_ingredients(p: dict) -> tuple[str | None, str | None]:
+    """Prefer English (US-first), unless the English text is a truncated stub of the main-language list."""
+    en = (p.get("ingredients_text_en") or "").strip()
+    main = (p.get("ingredients_text") or "").strip()
+    lang = p.get("lang")
+    if en and (not main or main == en or _items(en) * 1.5 >= _items(main)):
+        return en, "en"
+    if main:
+        return main, lang
+    return None, None
+
+
 def normalize(p: dict) -> ProviderProduct:
     s = get_settings()
     code = str(p.get("code") or "")
     cats = p.get("categories_tags") or []
     name = p.get("product_name_en") or p.get("product_name") or p.get("generic_name") or None
-    ingredients = p.get("ingredients_text_en") or p.get("ingredients_text") or None
+    ingredients, ingredients_lang = pick_ingredients(p)
     nova = p.get("nova_group")
     try:
         nova = int(nova) if nova not in (None, "") else None
@@ -108,7 +124,7 @@ def normalize(p: dict) -> ProviderProduct:
         packaging_text=p.get("packaging") or None,
         packaging_tags=p.get("packaging_tags") or [],
         ingredients_text=ingredients,
-        ingredients_lang=p.get("lang"),
+        ingredients_lang=ingredients_lang,
         allergens_tags=p.get("allergens_tags") or [],
         traces_tags=p.get("traces_tags") or [],
         additives_tags=p.get("additives_tags") or [],

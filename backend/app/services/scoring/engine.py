@@ -58,9 +58,13 @@ def _ramp(value: float, low: float, high: float, max_points: float) -> float:
 
 def _added_sugar_basis(inp: ScoringInputs) -> tuple[float | None, str]:
     n = inp.nutrition
-    if n.added_sugars is not None:
-        return n.added_sugars, "label_added_sugars"
     has_added = any(m.entry and ADDED_SUGAR_FLAG in m.entry.flags for m in inp.matches)
+    if n.added_sugars is not None:
+        # Crowd-sourced records sometimes report 0 g added sugars for products whose ingredients
+        # list sugar. Treat a value below 20% of total sugars as unreliable in that case.
+        if has_added and n.sugars is not None and n.sugars >= 5 and n.added_sugars < 0.2 * n.sugars:
+            return n.sugars, "added_sugars_conflict"
+        return n.added_sugars, "label_added_sugars"
     if inp.statement and inp.statement.ingredients:
         if not has_added:
             return 0.0, "no_added_sugar_in_ingredients"
@@ -96,6 +100,11 @@ def score_nutrition(inp: ScoringInputs, cfg: dict) -> dict:
         amount = v * factor
         pct = percent_dv("sodium" if key == "sodium" else rule["dv_key"], amount)
         pen = _ramp(pct, lo, full, rule["max_penalty"])
+        if key == "added_sugars" and sugar_basis == "added_sugars_conflict":
+            notes.append(
+                f"The reported added sugars ({n.added_sugars:g} g) conflict with an ingredient list that contains "
+                "added sugar, so total sugars were used instead. The data may need correcting."
+            )
         if key == "added_sugars" and sugar_basis == "total_sugars_proxy":
             notes.append(
                 "Added sugars aren't reported, so total sugars were used because the ingredients include "

@@ -325,3 +325,12 @@ def test_custom_avoid_list_names_ingredient():
     r = evaluate(ProfileSpec(None, "A", avoid_terms=["palm oil", "e150d"]), facts("Sugar, palm oil, colour (E150d)"))
     reds = [x for x in r["reasons"] if x["severity"] == "red"]
     assert len(reds) == 2 and any("palm oil" in x["message"] for x in reds)
+
+
+def test_implausible_zero_added_sugar_is_not_trusted():
+    n = NutritionInput(energy_kcal=378, fat=4, saturated_fat=0, carbohydrates=80, sugars=32.4, added_sugars=0,
+                       fiber=7, protein=8, salt=1.4)
+    sc = analyse("Whole grain oats, sugar, corn starch, honey, brown sugar syrup, salt", n, 4)[3]
+    nut = sc["components"]["nutrition"]
+    assert nut["sugar_basis"] == "added_sugars_conflict"
+    assert any(a["code"] == "nutrition.added_sugars" for a in nut["adjustments"])
