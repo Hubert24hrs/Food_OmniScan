@@ -394,6 +394,26 @@ void main() {
     expect(find.text('Get more with Premium'), findsNothing);
   });
 
+  testWidgets('app name and Premium button fit side by side on a narrow phone', (tester) async {
+    addTearDown(tester.view.reset);
+    for (final width in [320.0, 360.0, 412.0]) {
+      tester.view.devicePixelRatio = 3;
+      tester.view.physicalSize = Size(width * 3, 2400);
+      final app = AppState(api: billingApi())..me = {'id': 'u1', 'tier': 'free'};
+      await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: app,
+        child: MaterialApp(home: Scaffold(appBar: AppBar(title: const Wordmark(), actions: const [UpgradeChip()]))),
+      ));
+      await tester.pump();
+      // Any overflow would be reported as a test failure here.
+      expect(tester.takeException(), isNull, reason: 'width $width');
+      expect(find.text('Premium'), findsOneWidget, reason: 'width $width');
+      final name = tester.getRect(find.byType(FittedBox));
+      final chip = tester.getRect(find.byType(ActionChip));
+      expect(name.right, lessThanOrEqualTo(chip.left), reason: 'name overlaps the button at width $width');
+    }
+  });
+
   testWidgets('locked features in Explore open the plans for free users', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 6000));
     addTearDown(() => tester.binding.setSurfaceSize(null));

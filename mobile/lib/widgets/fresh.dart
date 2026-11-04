@@ -159,11 +159,18 @@ class Wordmark extends StatelessWidget {
         child: Image.asset('assets/brand/app_icon_256.png', width: 32, height: 32, semanticLabel: 'Food omniScan logo'),
       ),
       const SizedBox(width: 10),
-      Text.rich(TextSpan(children: [
-        TextSpan(text: 'Food ', style: TextStyle(color: cs.onSurface)),
-        TextSpan(text: 'omni', style: TextStyle(color: cs.primary)),
-        TextSpan(text: 'Scan', style: TextStyle(color: cs.secondary)),
-      ]), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+      // Shrinks rather than overflowing when the app bar also shows actions on a narrow phone.
+      Flexible(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text.rich(TextSpan(children: [
+            TextSpan(text: 'Food ', style: TextStyle(color: cs.onSurface)),
+            TextSpan(text: 'omni', style: TextStyle(color: cs.primary)),
+            TextSpan(text: 'Scan', style: TextStyle(color: cs.secondary)),
+          ]), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800), maxLines: 1),
+        ),
+      ),
     ]);
   }
 }

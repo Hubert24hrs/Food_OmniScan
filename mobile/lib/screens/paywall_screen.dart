@@ -474,11 +474,14 @@ class UpgradeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!context.watch<AppState>().isFree) return const SizedBox.shrink();
+    // Shorter label on narrow phones so the app name next to it keeps its room.
+    final narrow = MediaQuery.sizeOf(context).width < 420;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
         avatar: const Icon(Icons.workspace_premium, color: Colors.white, size: 18),
-        label: const Text('Go Premium', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        label: Text(narrow ? 'Premium' : 'Go Premium', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        tooltip: 'Go Premium',
         backgroundColor: Brand.tomato,
         side: BorderSide.none,
         shape: const StadiumBorder(),
