@@ -20,7 +20,7 @@
 `x-goog-api-key` header. To add another provider (e.g. Claude or Vertex), implement `AIProvider` and select it
 with `AI_PROVIDER`.
 
-Configuration: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-2.5-flash`), `AI_PROVIDER=gemini|none`.
+Configuration: `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-3.5-flash-lite`), `AI_PROVIDER=gemini|none`.
 Without a key, AI endpoints return `503 ai_not_configured` with a fallback hint (on-device OCR). They never
 return fake output.
 

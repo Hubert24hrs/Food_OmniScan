@@ -4,7 +4,7 @@
     {
       "name": "api",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "cd backend && .venv\\Scripts\\python -m uvicorn app.main:app --port 8010 --reload"],
+      "runtimeArgs": ["/c", "set GEMINI_API_KEY=&& cd backend && .venv\\Scripts\\python -m uvicorn app.main:app --port 8010 --reload"],
       "port": 8010,
       "autoPort": false
     },
@@ -18,7 +18,7 @@
     {
       "name": "api-lan",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "cd backend && .venv\\Scripts\\python -m uvicorn app.main:app --host 0.0.0.0 --port 8010"],
+      "runtimeArgs": ["/c", "set GEMINI_API_KEY=&& cd backend && .venv\\Scripts\\python -m uvicorn app.main:app --host 0.0.0.0 --port 8010"],
       "port": 8010,
       "autoPort": false
     },

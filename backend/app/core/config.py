@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     # --- AI ---------------------------------------------------------------
     ai_provider: Literal["gemini", "none"] = "gemini"
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
 
     # --- Market defaults ------------------------------------------------------
