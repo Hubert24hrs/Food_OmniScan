@@ -1,5 +1,7 @@
 # Testing
 
+All suites below except the live-provider tests run on every pull request and on pushes to `main` via GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): backend lint, format, tests, migration check and `pip-audit`; web types, lint, build and `npm audit`; Playwright E2E against a freshly started stack; `flutter analyze` and `flutter test`.
+
 | Suite | Command | What it covers | Status (2026-11-04) |
 |---|---|---|---|
 | Backend unit + integration | `cd backend && .venv/Scripts/python -m pytest` | Barcode validation, parser, KB matching, allergens (false friends, refined oils, PAL), nutrition label OCR (US + EU, OCR digit correction), scoring (determinism, caps, insufficient data, conflicting OFF data), compatibility, every API router against SQLite with mocked providers (respx), auth/RBAC, consent, export/delete, offline sync idempotency, submissions & moderation, methodology versioning, recalls, entitlements/quotas, Stripe/RevenueCat/Paystack signatures + idempotency, AI grounding & credit accounting | **73 passed** |

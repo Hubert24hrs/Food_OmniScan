@@ -1795,15 +1795,40 @@ INGREDIENTS: list[dict] = [
     ),
     _i("enzymes", "Enzymes", "enzyme", "Processing aids", synonyms=["enzyme"], vegan="maybe", vegetarian="maybe"),
     # ---------------------------------------------------------------- plant-based milks (not dairy)
-    _i("coconut-milk", "Coconut milk", "plant_milk", "Coconut-based ingredient (not dairy)",
-       synonyms=["coconut cream", "coconut milk powder", "coconut extract"]),
-    _i("soy-milk", "Soy milk", "plant_milk", "Soy-based drink (not dairy)", synonyms=["soya milk", "soya drink", "soy beverage"],
-       allergen="soybeans"),
-    _i("oat-milk", "Oat drink", "plant_milk", "Oat-based drink (not dairy)", synonyms=["oat milk", "oat beverage"],
-       allergen="gluten"),
-    _i("almond-milk", "Almond drink", "plant_milk", "Almond-based drink (not dairy)", synonyms=["almond milk", "almond beverage"],
-       allergen="nuts"),
-    _i("rice-milk", "Rice drink", "plant_milk", "Rice-based drink (not dairy)", synonyms=["rice milk", "rice beverage"]),
+    _i(
+        "coconut-milk",
+        "Coconut milk",
+        "plant_milk",
+        "Coconut-based ingredient (not dairy)",
+        synonyms=["coconut cream", "coconut milk powder", "coconut extract"],
+    ),
+    _i(
+        "soy-milk",
+        "Soy milk",
+        "plant_milk",
+        "Soy-based drink (not dairy)",
+        synonyms=["soya milk", "soya drink", "soy beverage"],
+        allergen="soybeans",
+    ),
+    _i(
+        "oat-milk",
+        "Oat drink",
+        "plant_milk",
+        "Oat-based drink (not dairy)",
+        synonyms=["oat milk", "oat beverage"],
+        allergen="gluten",
+    ),
+    _i(
+        "almond-milk",
+        "Almond drink",
+        "plant_milk",
+        "Almond-based drink (not dairy)",
+        synonyms=["almond milk", "almond beverage"],
+        allergen="nuts",
+    ),
+    _i(
+        "rice-milk", "Rice drink", "plant_milk", "Rice-based drink (not dairy)", synonyms=["rice milk", "rice beverage"]
+    ),
     # ---------------------------------------------------------------- US enrichment / fortification
     _i(
         "niacin",

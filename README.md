@@ -1,5 +1,7 @@
 # Food omniScan
 
+[![CI](https://github.com/Hubert24hrs/Food_OmniScan/actions/workflows/ci.yml/badge.svg)](https://github.com/Hubert24hrs/Food_OmniScan/actions/workflows/ci.yml)
+
 **Know what's inside. Understand what you eat.**
 
 Food omniScan is an AI-assisted food intelligence platform for the web, Android and iOS. Scan a packaged
